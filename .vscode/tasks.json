@@ -16,6 +16,19 @@
       "options": { "cwd": "${workspaceFolder}" },
       "presentation": { "reveal": "always", "panel": "new" },
       "problemMatcher": []
+    },
+    {
+      "label": "NEXO: servicio Python (MySQL)",
+      "type": "shell",
+      "command": "${workspaceFolder}/.venv/Scripts/python.exe backend/app.py",
+      "options": { "cwd": "${workspaceFolder}" },
+      "presentation": { "reveal": "always", "panel": "new" },
+      "problemMatcher": []
+    },
+    {
+      "label": "NEXO: iniciar todo",
+      "dependsOn": ["NEXO: servicio Python (MySQL)", "NEXO: servidor PHP"],
+      "problemMatcher": []
     }
   ]
 }
