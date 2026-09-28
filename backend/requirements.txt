@@ -1,0 +1,4 @@
+# Dependencia opcional, SOLO para el modo C (MySQL).
+# Los modos A y B funcionan sin instalar nada.
+# Instalar con:  .venv\Scripts\python.exe -m pip install -r backend\requirements.txt
+mysql-connector-python==9.1.0

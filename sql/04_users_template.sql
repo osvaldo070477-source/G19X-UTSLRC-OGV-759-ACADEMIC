@@ -1,0 +1,16 @@
+-- NEXO · plantilla de usuarios MySQL (edítala antes de ejecutarla).
+-- No contiene contraseñas reales: sustituye CADA 'PON...' por valores propios.
+-- Ejecutar como administrador en el cliente mysql, línea por línea.
+--
+-- Lector de la fuente (el servicio Python solo consulta nexo_source):
+--   CREATE USER 'nexo_ro'@'127.0.0.1' IDENTIFIED BY 'PON_CONTRASEÑA_LECTURA';
+--   GRANT SELECT ON nexo_source.* TO 'nexo_ro'@'127.0.0.1';
+--
+-- Escritor de resultados (solo registra en nexo_app, nunca toca la fuente):
+--   CREATE USER 'nexo_app'@'127.0.0.1' IDENTIFIED BY 'PON_CONTRASEÑA_APP';
+--   GRANT SELECT, INSERT ON nexo_app.* TO 'nexo_app'@'127.0.0.1';
+--
+--   FLUSH PRIVILEGES;
+--
+-- Después copia esas contraseñas a tu archivo .env (nunca a este .sql).
+SELECT 'Plantilla: sustituye las contraseñas antes de ejecutar.' AS aviso;

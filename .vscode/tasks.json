@@ -1,0 +1,21 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "NEXO: servicio Python",
+      "type": "shell",
+      "command": "${workspaceFolder}/.venv/Scripts/python.exe backend/app.py --demo",
+      "options": { "cwd": "${workspaceFolder}" },
+      "presentation": { "reveal": "always", "panel": "new" },
+      "problemMatcher": []
+    },
+    {
+      "label": "NEXO: servidor PHP",
+      "type": "shell",
+      "command": "php -S 127.0.0.1:8000 server/router.php",
+      "options": { "cwd": "${workspaceFolder}" },
+      "presentation": { "reveal": "always", "panel": "new" },
+      "problemMatcher": []
+    }
+  ]
+}

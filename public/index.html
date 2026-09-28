@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="NEXO: recorrido de gobierno de datos — catálogo, calidad, decisiones y bitácora.">
+<title>NEXO · Gobierno de datos</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<a class="skip" href="#contenido">Saltar al contenido</a>
+
+<!-- Portada de bienvenida: lo primero que se ve al entrar -->
+<div id="welcome" role="dialog" aria-modal="true" aria-labelledby="welcomeTitle">
+  <div class="welcome-card">
+    <div class="welcome-brand">
+      <svg class="logo" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="17" fill="none" stroke="currentColor" stroke-width="3"/><path d="M12 26 L18 14 L22 24 L28 12" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <div>
+        <p class="brand-name">NEXO</p>
+        <p class="brand-sub">Arquitectura Agentic para Data Governance</p>
+      </div>
+    </div>
+    <h1 id="welcomeTitle">Bienvenido a NEXO</h1>
+    <p class="welcome-tag">Gobierno de datos en la práctica: conoce tus datos, verifica su calidad y registra tus decisiones.</p>
+    <div class="hero-actions welcome-actions">
+      <button id="btnEnter" class="btn primary">Entrar a la aplicación</button>
+      <button id="btnShowLogin" class="btn">Iniciar sesión</button>
+      <button id="btnShowRegister" class="btn ghost">Registrarse</button>
+    </div>
+    <p class="muted small">Puedes entrar como invitado. La cuenta firma tus decisiones con tu nombre.</p>
+  </div>
+</div>
+
+<header class="topbar">
+  <div class="toprow">
+    <div class="brand">
+      <svg class="logo" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="17" fill="none" stroke="currentColor" stroke-width="3"/><path d="M12 26 L18 14 L22 24 L28 12" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <div>
+        <p class="brand-name">NEXO</p>
+        <p class="brand-sub">Arquitectura Agentic para Data Governance · MVP con reglas deterministas</p>
+      </div>
+    </div>
+    <div class="userbox">
+      <button id="userBtn" aria-haspopup="dialog">👤 <span id="userLabel">Invitado</span></button>
+    </div>
+  </div>
+  <p id="modeBadge" class="mode-badge" role="status">Detectando modo…</p>
+  <nav class="mainnav" aria-label="Secciones de NEXO">
+    <button data-tab="observatorio" aria-current="page">Observatorio</button>
+    <button data-tab="catalogo">Catálogo</button>
+    <button data-tab="calidad">Calidad</button>
+    <button data-tab="decisiones">Decisiones</button>
+    <button data-tab="bitacora">Bitácora</button>
+    <button data-tab="agentes">Agentes</button>
+  </nav>
+</header>
+
+<div id="noticeBar" class="notice" hidden></div>
+<div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+
+<main id="contenido">
+  <!-- OBSERVATORIO -->
+  <section id="tab-observatorio" class="tab" aria-label="Observatorio">
+    <div class="hero">
+      <div class="hero-text">
+        <h1>Gobierno de datos, de principio a fin</h1>
+        <p>Conoce tus datos, verifica su calidad y deja constancia de cada decisión.</p>
+        <div class="hero-actions">
+          <button id="btnAnalyze" class="btn primary">▶ Ejecutar análisis</button>
+          <button id="btnHow" class="btn ghost">Cómo funciona</button>
+        </div>
+        <p id="analyzeMsg" class="state-line" role="status"></p>
+      </div>
+      <div class="gauge-card" aria-label="Índice de calidad">
+        <h2>Índice de calidad</h2>
+        <svg class="gauge" viewBox="0 0 160 160" role="img" aria-labelledby="gaugeTitle gaugeVal">
+          <title id="gaugeTitle">Índice de calidad global</title>
+          <circle cx="80" cy="80" r="64" class="gauge-bg"/>
+          <circle id="gaugeArc" cx="80" cy="80" r="64" class="gauge-arc" stroke-dasharray="402" stroke-dashoffset="402"/>
+          <text id="gaugeVal" x="80" y="86" text-anchor="middle" class="gauge-num">—</text>
+          <text x="80" y="106" text-anchor="middle" class="gauge-sub">sobre 100</text>
+        </svg>
+        <p id="gaugeDetail" class="muted">Sin evaluar. Ejecuta el análisis para calcular el índice con las reglas.</p>
+      </div>
+    </div>
+    <div id="howBox" class="howto" hidden>
+      <h2>Recorrido en 5 pasos</h2>
+      <ol>
+        <li><strong>Catálogo:</strong> conoce los activos, su responsable y sus columnas.</li>
+        <li><strong>Ejecutar análisis:</strong> las reglas revisan obligatoriedad, unicidad y formato de correo.</li>
+        <li><strong>Calidad:</strong> abre cada hallazgo y revisa la evidencia fila por fila.</li>
+        <li><strong>Decisiones:</strong> acepta, descarta o reabre cada recomendación con un comentario.</li>
+        <li><strong>Bitácora:</strong> consulta ejecuciones anteriores y exporta el análisis en JSON.</li>
+      </ol>
+      <p class="muted">Aceptar una recomendación solo registra tu decisión: no corrige los datos ni sube el índice.</p>
+    </div>
+    <div class="stats" id="statsGrid" aria-label="Resumen">
+      <div class="stat"><span class="stat-k">Activos</span><span class="stat-v" id="stAssets">—</span></div>
+      <div class="stat"><span class="stat-k">Registros</span><span class="stat-v" id="stRows">—</span></div>
+      <div class="stat"><span class="stat-k">Hallazgos</span><span class="stat-v" id="stFindings">—</span></div>
+      <div class="stat"><span class="stat-k">Decisiones pendientes</span><span class="stat-v" id="stPending">—</span></div>
+      <div class="stat"><span class="stat-k">Último análisis</span><span class="stat-v small" id="stLast">—</span></div>
+    </div>
+    <div class="split">
+      <div class="panel">
+        <h2>Comprobaciones e incidencias</h2>
+        <div class="meter" role="img" aria-label="Proporción de comprobaciones correctas">
+          <div id="meterOk" class="meter-ok" style="width:0%"></div>
+        </div>
+        <p id="checksLine" class="muted">Sin datos todavía.</p>
+      </div>
+      <div class="panel">
+        <h2>Hallazgos por prioridad</h2>
+        <ul id="prioList" class="prio-list"><li class="muted">Sin datos todavía.</li></ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- CATÁLOGO -->
+  <section id="tab-catalogo" class="tab" aria-label="Catálogo" hidden>
+    <div class="toolbar">
+      <div class="search-row">
+        <label for="catSearch">Buscar en el catálogo</label>
+        <input id="catSearch" type="search" placeholder="Ej. correo, responsable, producto…" autocomplete="off">
+      </div>
+      <div class="filter-row">
+        <label for="catDomain">Dominio
+          <select id="catDomain"><option value="">Todos</option></select>
+        </label>
+        <label for="catTable">Activo
+          <select id="catTable"><option value="">Todos</option></select>
+        </label>
+      </div>
+    </div>
+    <div id="catalogList" class="catalog"></div>
+  </section>
+
+  <!-- CALIDAD -->
+  <section id="tab-calidad" class="tab" aria-label="Calidad" hidden>
+    <div class="toolbar">
+      <label for="fTable">Tabla
+        <select id="fTable"><option value="">Todas</option><option>clientes</option><option>pedidos</option><option>productos</option></select>
+      </label>
+      <label for="fPrio">Prioridad
+        <select id="fPrio"><option value="">Todas</option><option>Alta</option><option>Media</option><option>Baja</option></select>
+      </label>
+      <label for="fRule">Tipo de problema
+        <select id="fRule"><option value="">Todos</option><option value="required">Obligatoriedad</option><option value="unique">Unicidad</option><option value="email">Formato de correo</option></select>
+      </label>
+    </div>
+    <div id="qualityWrap" class="table-wrap">
+      <p class="empty">Aún no hay análisis. Ve al Observatorio y pulsa «Ejecutar análisis».</p>
+    </div>
+  </section>
+
+  <!-- DECISIONES -->
+  <section id="tab-decisiones" class="tab" aria-label="Decisiones" hidden>
+    <p class="lede">Aceptar solo registra tu decisión: no cambia datos ni el índice.</p>
+    <div id="decList" class="dec-list"><p class="empty">Sin análisis todavía.</p></div>
+  </section>
+
+  <!-- BITÁCORA -->
+  <section id="tab-bitacora" class="tab" aria-label="Bitácora" hidden>
+    <div class="toolbar">
+      <button id="btnRefreshRuns" class="btn">↻ Actualizar historial</button>
+      <button id="btnExport" class="btn ghost">⬇ Exportar análisis en JSON</button>
+      <label class="inline" for="runSelect">Ejecución
+        <select id="runSelect"></select>
+      </label>
+    </div>
+    <div id="runDetail" class="panel"><p class="empty">Selecciona una ejecución del historial.</p></div>
+    <h2>Últimas ejecuciones</h2>
+    <div id="runsWrap" class="table-wrap"><p class="empty">Aún no hay ejecuciones registradas.</p></div>
+  </section>
+
+  <!-- AGENTES -->
+  <section id="tab-agentes" class="tab" aria-label="Centro de agentes" hidden>
+    <p id="aiBanner" class="lede" role="status">Centro de agentes.</p>
+    <div class="split">
+      <div class="panel">
+        <h2>Proveedor y agentes</h2>
+        <dl id="aiStatus" class="kv"><dt>Estado</dt><dd>Sin consultar.</dd></dl>
+        <h3>Agentes disponibles</h3>
+        <ul id="agentList" class="prio-list"><li class="muted">Sin información.</li></ul>
+      </div>
+      <div class="panel">
+        <h2>Iniciar análisis agentic</h2>
+        <div class="form-col">
+          <label for="agFuente">Fuente de datos
+            <select id="agFuente">
+              <option value="muestra">Muestra sintética</option>
+              <option value="origen">Fuente MySQL autorizada</option>
+            </select>
+          </label>
+          <label class="check" for="agReview"><input type="checkbox" id="agReview"> Pedir revisión humana antes de cerrar</label>
+          <div><button id="btnAgentStart" class="btn primary">▶ Iniciar trabajo</button></div>
+        </div>
+        <p id="agMsg" class="state-line" role="status"></p>
+        <p class="muted small">El modelo elige las herramientas; el índice lo calcula el motor. 🤖 IA = propuesta, ✓ = verificado.</p>
+      </div>
+    </div>
+    <div class="panel">
+      <h2>Progreso <span id="agJobId" class="muted"></span></h2>
+      <ol id="agStages" class="stages"><li class="muted">Sin trabajo seleccionado.</li></ol>
+      <div class="dec-actions">
+        <button id="btnAgentCancel" class="btn">■ Cancelar trabajo</button>
+        <button id="btnAgentRefresh" class="btn ghost">↻ Actualizar</button>
+      </div>
+      <div id="agReviews"></div>
+      <h3>Determinista frente a IA</h3>
+      <div id="agVerdict" class="table-wrap"><p class="empty">Sin resultados todavía.</p></div>
+      <h3>Herramientas ejecutadas</h3>
+      <div id="agTools" class="table-wrap"><p class="empty">Ninguna todavía.</p></div>
+      <p id="agUsage" class="muted small"></p>
+    </div>
+    <div class="toolbar">
+      <button id="btnAgentJobs" class="btn ghost">↻ Actualizar historial</button>
+      <button id="btnAgentRetry" class="btn ghost">↻ Reintentar trabajo</button>
+      <label class="inline" for="agJobSelect">Trabajo
+        <select id="agJobSelect"></select>
+      </label>
+    </div>
+    <div id="agJobsWrap" class="table-wrap"><p class="empty">Aún no hay trabajos.</p></div>
+  </section>
+
+  <!-- PERFIL (se abre desde el menú 👤, sin botón en la barra) -->
+  <section id="tab-perfil" class="tab" aria-label="Mi perfil" hidden>
+    <div class="panel profile-card">
+      <div id="profAvatar" class="avatar" aria-hidden="true">?</div>
+      <div>
+        <h2 id="profName">Invitado</h2>
+        <p id="profEmail" class="muted">Sin sesión iniciada.</p>
+        <p id="profState" class="muted small">Exploras como invitado: tus decisiones quedarán sin firma.</p>
+      </div>
+    </div>
+    <div class="dec-actions">
+      <button id="btnProfEnter" class="btn primary">Entrar a la aplicación</button>
+      <button id="btnProfLogin" class="btn">Iniciar sesión</button>
+      <button id="btnProfRegister" class="btn ghost">Crear cuenta</button>
+      <button id="btnProfLogout" class="btn ghost" hidden>Cerrar sesión</button>
+    </div>
+  </section>
+</main>
+
+<!-- Panel lateral de evidencia -->
+<div id="drawerOverlay" class="overlay" hidden></div>
+<aside id="drawer" class="drawer" role="dialog" aria-modal="true" aria-labelledby="drawerTitle" hidden>
+  <div class="drawer-head">
+    <h2 id="drawerTitle">Evidencia</h2>
+    <button id="drawerClose" class="btn ghost">✕ Cerrar</button>
+  </div>
+  <div id="drawerBody" class="drawer-body"></div>
+</aside>
+
+<!-- Modales de autenticación -->
+<div id="authOverlay" class="overlay" hidden></div>
+<div id="modalProfile" class="modal" role="dialog" aria-modal="true" aria-labelledby="profTitle" hidden>
+  <div class="profile-card">
+    <div id="mAvatar" class="avatar" aria-hidden="true">?</div>
+    <div>
+      <h2 id="profTitle">Invitado</h2>
+      <p id="mEmail" class="muted"></p>
+      <p id="mState" class="muted small"></p>
+    </div>
+  </div>
+  <div id="mActions" class="dec-actions"></div>
+  <div class="dec-actions">
+    <button type="button" class="btn ghost" data-close>Cerrar</button>
+  </div>
+</div>
+<div id="modalLogin" class="modal" role="dialog" aria-modal="true" aria-labelledby="loginTitle" hidden>
+  <h2 id="loginTitle">Iniciar sesión</h2>
+  <form id="formLogin" novalidate>
+    <label for="liEmail">Correo electrónico
+      <input id="liEmail" type="email" autocomplete="email" required>
+    </label>
+    <p class="field-err" id="liEmailErr" hidden></p>
+    <label for="liPass">Contraseña
+      <input id="liPass" type="password" autocomplete="current-password" required>
+    </label>
+    <p class="field-err" id="liPassErr" hidden></p>
+    <p class="field-err" id="loginErr" hidden></p>
+    <div class="dec-actions">
+      <button type="submit" class="btn primary">Entrar</button>
+      <button type="button" class="btn ghost" data-close>Cancelar</button>
+    </div>
+  </form>
+</div>
+<div id="modalRegister" class="modal" role="dialog" aria-modal="true" aria-labelledby="regTitle" hidden>
+  <h2 id="regTitle">Crear cuenta</h2>
+  <form id="formRegister" novalidate>
+    <label for="rgName">Nombre
+      <input id="rgName" type="text" autocomplete="name" maxlength="60" required>
+    </label>
+    <p class="field-err" id="rgNameErr" hidden></p>
+    <label for="rgEmail">Correo electrónico
+      <input id="rgEmail" type="email" autocomplete="email" maxlength="160" required>
+    </label>
+    <p class="field-err" id="rgEmailErr" hidden></p>
+    <label for="rgPass">Contraseña (8+ caracteres, mayúscula, minúscula y número)
+      <input id="rgPass" type="password" autocomplete="new-password" maxlength="72" required>
+    </label>
+    <div class="meter" aria-hidden="true"><div id="pwBar" class="meter-ok" style="width:0%"></div></div>
+    <p class="muted small" id="pwLabel">Seguridad: sin evaluar.</p>
+    <p class="field-err" id="rgPassErr" hidden></p>
+    <label for="rgPass2">Repite la contraseña
+      <input id="rgPass2" type="password" autocomplete="new-password" maxlength="72" required>
+    </label>
+    <p class="field-err" id="rgPass2Err" hidden></p>
+    <p class="field-err" id="regErr" hidden></p>
+    <div class="dec-actions">
+      <button type="submit" class="btn primary">Registrarme</button>
+      <button type="button" class="btn ghost" data-close>Cancelar</button>
+    </div>
+  </form>
+</div>
+
+<footer class="foot">
+  <p>NEXO · MVP académico con reglas deterministas (no es IA autónoma) · <span id="footMode">modo por detectar</span></p>
+</footer>
+
+<script src="app.js"></script>
+</body>
+</html>
