@@ -212,6 +212,8 @@ function setModeBadge(){
     s.textContent="Modo local"; t.textContent="PHP · Python · memoria";
     f.textContent="modo local (la memoria se pierde al reiniciar)";
   }
+  // Invitado solo en demostración (sin servidor no hay autenticación).
+  $("btnEnter").hidden=state.mode!=="demo";
 }
 function detectMode(){
   if(location.protocol==="file:"){ state.mode="demo"; setModeBadge();
@@ -844,8 +846,7 @@ function openProfile(){
   if(!u&&(state.mode==="demo")){
     A.innerHTML="<button class='btn primary' data-p='enter'>Entrar a la aplicación</button>";
   } else if(!u){
-    A.innerHTML="<button class='btn primary' data-p='enter'>Entrar a la aplicación</button>"+
-      "<button class='btn' data-p='login'>Iniciar sesión</button>"+
+    A.innerHTML="<button class='btn primary' data-p='login'>Iniciar sesión</button>"+
       "<button class='btn link' data-p='register'>Crear cuenta</button>";
   } else {
     A.innerHTML="<button class='btn primary' data-p='enter'>Entrar a la aplicación</button>"+
@@ -877,8 +878,15 @@ function closeModals(){
   if(modalReturn&&modalReturn.focus) modalReturn.focus();
 }
 function doLogout(){
-  apiPost("auth_logout", {}).then(function(){ setUser(null); toast("Sesión cerrada."); })
-    .catch(function(){ setUser(null); });
+  apiPost("auth_logout", {}).then(function(){ setUser(null); exitToWelcome(); })
+    .catch(function(){ setUser(null); exitToWelcome(); });
+}
+function exitToWelcome(){
+  closeModals();
+  closeNav();
+  $("shell").hidden=true;
+  $("welcome").hidden=false;
+  $("btnEnter").focus();
 }
 $("userBtn").addEventListener("click", openProfile);
 document.addEventListener("keydown", function(e){
