@@ -158,6 +158,7 @@ var SECTIONS = {
 function entered(){ return $("welcome").hidden; }
 function enterApp(){
   $("welcome").hidden=true;
+  $("shell").hidden=false;
   showTab("observatorio");
 }
 function closeNav(){
