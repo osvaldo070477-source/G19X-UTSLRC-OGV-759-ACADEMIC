@@ -146,10 +146,24 @@ function $(id){ return document.getElementById(id); }
 
 /* ---------- Navegación por pestañas ---------- */
 var tabs = ["observatorio","catalogo","calidad","decisiones","bitacora","agentes","perfil"];
+var SECTIONS = {
+  observatorio: ["Observatorio", "Estado general de tus datos y último análisis."],
+  catalogo: ["Catálogo", "Activos, responsables y estructura."],
+  calidad: ["Calidad", "Hallazgos verificados por las reglas."],
+  decisiones: ["Decisiones", "Responde las recomendaciones pendientes."],
+  bitacora: ["Bitácora", "Historial de ejecuciones y exportaciones."],
+  agentes: ["Agentes", "Trabajos de análisis con IA."],
+  perfil: ["Mi perfil", "Tu cuenta y sesión."]
+};
 function entered(){ return $("welcome").hidden; }
 function enterApp(){
   $("welcome").hidden=true;
   showTab("observatorio");
+}
+function closeNav(){
+  document.body.classList.remove("nav-open");
+  $("navScrim").hidden=true;
+  $("menuBtn").setAttribute("aria-expanded","false");
 }
 function showTab(name){
   tabs.forEach(function(t){
@@ -157,6 +171,10 @@ function showTab(name){
     var b=document.querySelector('[data-tab="'+t+'"]');
     if(b){ if(t===name) b.setAttribute("aria-current","page"); else b.removeAttribute("aria-current"); }
   });
+  var meta=SECTIONS[name]||SECTIONS.observatorio;
+  $("sectionTitle").textContent=meta[0];
+  $("sectionDesc").textContent=meta[1];
+  closeNav();
   if(name==="bitacora") renderRuns();
   if(name==="decisiones") renderDecisions();
   if(name==="calidad") renderQuality();
@@ -165,6 +183,19 @@ function showTab(name){
 }
 document.querySelectorAll("[data-tab]").forEach(function(b){
   b.addEventListener("click", function(){ showTab(b.getAttribute("data-tab")); });
+});
+$("menuBtn").addEventListener("click", function(){
+  var open=!document.body.classList.contains("nav-open");
+  document.body.classList.toggle("nav-open", open);
+  $("navScrim").hidden=!open;
+  $("menuBtn").setAttribute("aria-expanded", open?"true":"false");
+});
+$("navScrim").addEventListener("click", closeNav);
+document.addEventListener("click", function(e){
+  var t=e.target&&e.target.closest?e.target.closest("[data-goto],[data-clear]"):null;
+  if(!t) return;
+  if(t.hasAttribute("data-goto")) showTab(t.getAttribute("data-goto"));
+  if(t.hasAttribute("data-clear")) clearCatalogFilters();
 });
 
 /* ---------- Detección de modo ---------- */
@@ -296,7 +327,7 @@ function renderObservatory(){
   var counts={};
   r.hallazgos.forEach(function(h){ counts[h.prioridad]=(counts[h.prioridad]||0)+h.incidencias; });
   pl.innerHTML=Object.keys(counts).sort().map(function(p){
-    return "<li><span>▲ Prioridad "+esc(p)+"</span><strong>"+counts[p]+" incidencias</strong></li>";
+    return "<li><span>Prioridad "+esc(p)+"</span><strong>"+counts[p]+" incidencias</strong></li>";
   }).join("")||"<li class='muted'>Sin hallazgos: todo en regla.</li>";
 }
 
@@ -316,10 +347,10 @@ function renderCatalog(){
     shown++;
     var d=document.createElement("article"); d.className="asset";
     d.innerHTML=
-      "<div class='asset-head'><h2>"+esc(m.nombre)+" <span class='muted'>· "+esc(t)+"</span></h2>"+
-      "<div class='asset-meta'><span class='chip'>"+esc(m.dominio)+"</span>"+
-      "<span class='chip teal'>⦿ "+esc(m.responsable)+"</span>"+
-      "<span class='chip'>"+rows.length+" registros</span></div></div>"+
+      "<div class='asset-head'><h2>"+esc(m.nombre)+" <code class='asset-tech'>"+esc(t)+"</code></h2>"+
+      "<div class='asset-meta'><span>Dominio: <strong>"+esc(m.dominio)+"</strong></span>"+
+      "<span>Responsable: <strong>"+esc(m.responsable)+"</strong></span>"+
+      "<span><strong>"+rows.length+"</strong> registros</span></div></div>"+
       "<div class='asset-body'><p>"+esc(m.descripcion)+"</p>"+
       "<ul class='cols'>"+m.columnas.map(function(c){return "<li><strong>"+esc(c.nombre)+"</strong> · "+esc(c.tipo)+"</li>";}).join("")+"</ul>"+
       "<details><summary>Reglas aplicables ("+m.reglas.length+")</summary><ul class='rules'>"+m.reglas.map(function(x){return "<li>"+esc(x)+"</li>";}).join("")+"</ul></details>"+
@@ -330,7 +361,14 @@ function renderCatalog(){
       "</tbody></table></div></details></div>";
     box.appendChild(d);
   });
-  if(!shown) box.innerHTML="<p class='empty'>Sin resultados para esa búsqueda. Prueba con «correo» o limpia los filtros.</p>";
+  if(!shown) box.innerHTML="<div class='empty-state'><h2>Sin resultados</h2><p>Prueba con «correo» o limpia los filtros.</p><button class='btn' data-clear='1'>Limpiar filtros</button></div>";
+  var active=q||dom||tab;
+  $("btnClearFilters").hidden=!active;
+}
+$("btnClearFilters").addEventListener("click", clearCatalogFilters);
+function clearCatalogFilters(){
+  $("catSearch").value=""; $("catDomain").value=""; $("catTable").value="";
+  renderCatalog();
 }
 function fillCatalogFilters(){
   var doms=[...new Set(CAT_TABLES.map(function(t){return META[t].dominio;}))];
@@ -346,18 +384,25 @@ function filteredFindings(){
     return (!t||h.tabla===t)&&(!p||h.prioridad===p)&&(!ru||h.regla===ru);
   });
 }
-function ruleIcon(rule){ return rule==="unique"?"⧉":(rule==="email"?"@":"⚠"); }
+function ruleIcon(rule){ return "<span class='rule-dot rule-"+rule+"' aria-hidden='true'></span>"; }
 function renderQuality(){
-  var w=$("qualityWrap"), r=state.run;
-  if(!r){ w.innerHTML="<p class='empty'>Aún no hay análisis. Ve al Observatorio y pulsa «Ejecutar análisis».</p>"; return; }
+  var w=$("qualityWrap"), r=state.run, sum=$("qualitySummary");
+  if(!r){
+    sum.hidden=true;
+    w.innerHTML="<div class='empty-state'><h2>Todavía no hay resultados de calidad</h2><p>Ejecuta el análisis para verificar los datos con las reglas.</p><button class='btn primary' data-goto='observatorio'>Ir a ejecutar análisis</button></div>";
+    return;
+  }
   var list=filteredFindings();
-  if(!list.length){ w.innerHTML="<p class='empty'>Sin hallazgos para esos filtros. Ajusta tabla, prioridad o tipo de problema.</p>"; return; }
+  var tot=list.reduce(function(a,h){return a+h.incidencias;},0);
+  sum.hidden=false;
+  sum.textContent=list.length+" hallazgos · "+tot+" incidencias.";
+  if(!list.length){ w.innerHTML="<div class='empty-state'><h2>Sin hallazgos para esos filtros</h2><p>Ajusta tabla, prioridad o tipo de problema.</p></div>"; return; }
   var html="<table><thead><tr><th>Hallazgo</th><th>Tabla · columna</th><th>Prioridad</th><th>Incidencias</th><th>Estado</th><th></th></tr></thead><tbody>";
   list.forEach(function(h,i){
     var idx=r.hallazgos.indexOf(h);
-    html+="<tr><td><strong>"+ruleIcon(h.regla)+" "+esc(h.regla_etiqueta)+"</strong></td>"+
+    html+="<tr><td><strong>"+ruleIcon(h.regla)+esc(h.regla_etiqueta)+"</strong></td>"+
       "<td>"+esc(h.tabla)+" · <strong>"+esc(h.columna)+"</strong></td>"+
-      "<td><span class='badge "+h.prioridad.toLowerCase()+"'>▲ "+esc(h.prioridad)+"</span></td>"+
+      "<td><span class='badge "+h.prioridad.toLowerCase()+"'>"+esc(h.prioridad)+"</span></td>"+
       "<td><strong>"+h.incidencias+"</strong></td>"+
       "<td><span class='badge estado'>"+esc(estadoTxt(h.estado))+"</span></td>"+
       "<td><button class='btn' data-ev='"+idx+"'>Ver evidencia</button></td></tr>";
@@ -375,7 +420,7 @@ function openEvidence(h){
   lastFocus=document.activeElement;
   $("drawerTitle").textContent="Evidencia · "+h.tabla+"."+h.columna+" ("+h.regla_etiqueta+")";
   $("drawerBody").innerHTML=
-    "<p><span class='badge "+h.prioridad.toLowerCase()+"'>▲ Prioridad "+esc(h.prioridad)+"</span> "+
+    "<p><span class='badge "+h.prioridad.toLowerCase()+"'>Prioridad: "+esc(h.prioridad)+"</span> "+
     "<strong>"+h.incidencias+" incidencias</strong></p>"+
     "<p><strong>Recomendación:</strong> "+esc(h.recomendacion)+"</p>"+
     h.evidencias.map(function(e){
@@ -396,24 +441,27 @@ document.addEventListener("keydown", function(e){ if(e.key==="Escape"&&!$("drawe
 /* ---------- Decisiones ---------- */
 function renderDecisions(){
   var box=$("decList"), r=state.run;
-  if(!r){ box.innerHTML="<p class='empty'>Sin análisis todavía.</p>"; return; }
+  if(!r){ box.innerHTML="<div class='empty-state'><h2>Sin decisiones pendientes</h2><p>Primero ejecuta un análisis y revisa los hallazgos.</p><button class='btn primary' data-goto='calidad'>Ver hallazgos</button></div>"; return; }
   var pend=r.hallazgos.filter(function(h){return h.estado==="pending";});
-  var html="<p class='lede'>"+pend.length+" pendientes de "+r.hallazgos.length+". Aceptar solo registra tu decisión.</p>";
+  var html="<p class='context-note'>"+pend.length+" pendientes de "+r.hallazgos.length+". Aceptar solo registra tu decisión.</p>";
   html+=r.hallazgos.map(function(h,idx){
+    var evs=h.eventos||[];
+    var fecha=evs.length?evs[evs.length-1].creado_en:null;
     return "<article class='dec' data-estado='"+esc(h.estado)+"'>"+
-    "<h2>"+ruleIcon(h.regla)+" "+esc(h.tabla)+"."+esc(h.columna)+" · "+esc(h.regla_etiqueta)+
-    " <span class='badge "+h.prioridad.toLowerCase()+"'>▲ "+esc(h.prioridad)+"</span> "+
+    "<h2>"+ruleIcon(h.regla)+esc(h.tabla)+"."+esc(h.columna)+" · "+esc(h.regla_etiqueta)+
+    " <span class='badge "+h.prioridad.toLowerCase()+"'>"+esc(h.prioridad)+"</span> "+
     "<span class='badge estado'>"+esc(estadoTxt(h.estado))+"</span></h2>"+
-    "<p class='muted small'>"+h.incidencias+" incidencias</p>"+
+    "<p class='dec-meta'>"+h.incidencias+" incidencias"+
+      (h.decidido_por?" · por "+esc(h.decidido_por):"")+
+      (fecha?" · "+esc(String(fecha).slice(0,16).replace("T"," ")):"")+"</p>"+
     "<details><summary>Recomendación</summary><p class='small'>"+esc(h.recomendacion)+"</p></details>"+
-    (h.ultimo_comentario?"<p><strong>Último comentario:</strong> "+esc(h.ultimo_comentario)+
-      (h.decidido_por?" <span class='muted'>(por "+esc(h.decidido_por)+")</span>":"")+"</p>":"")+
+    (h.ultimo_comentario?"<p><strong>Último comentario:</strong> "+esc(h.ultimo_comentario)+"</p>":"")+
     "<label>Comentario opcional (máx. 1000 caracteres)<textarea maxlength='1000' data-c='"+idx+"' placeholder='Ej. Se deriva al responsable comercial…'></textarea></label>"+
     "<div class='dec-actions'>"+
-    "<button class='btn primary' data-a='accept' data-i='"+idx+"'>✓ Aceptar</button>"+
-    "<button class='btn' data-a='discard' data-i='"+idx+"'>✕ Descartar</button>"+
-    "<button class='btn ghost' data-a='reopen' data-i='"+idx+"'>↩ Reabrir</button>"+
-    "<button class='btn ghost' data-ev2='"+idx+"'>Ver evidencia</button>"+
+    "<button class='btn primary' data-a='accept' data-i='"+idx+"'>Aceptar</button>"+
+    "<button class='btn danger' data-a='discard' data-i='"+idx+"'>Descartar</button>"+
+    "<button class='btn ghost' data-a='reopen' data-i='"+idx+"'>Reabrir</button>"+
+    "<button class='btn' data-ev2='"+idx+"'>Ver evidencia</button>"+
     "</div></article>";
   }).join("");
   box.innerHTML=html;
@@ -469,7 +517,14 @@ function renderRuns(){
 }
 function paintRuns(items){
   var w=$("runsWrap");
-  if(!items.length){ w.innerHTML="<p class='empty'>Aún no hay ejecuciones registradas.</p>"; return; }
+  var card=$("runDetailCard");
+  if(!items.length){
+    card.hidden=true;
+    w.innerHTML="<div class='empty-state'><h2>Todavía no hay ejecuciones</h2><p>Ejecuta tu primer análisis para verlo aquí.</p><button class='btn primary' data-goto='observatorio'>Ir a ejecutar análisis</button></div>";
+    syncExport();
+    return;
+  }
+  card.hidden=false;
   w.innerHTML="<table><thead><tr><th>#</th><th>Fecha</th><th>Modo</th><th>Índice</th><th>Incidencias</th><th></th></tr></thead><tbody>"+
     items.map(function(r){
       return "<tr><td><strong>"+r.id+"</strong></td><td>"+esc(r.creado_en)+"</td><td>"+esc(r.modo)+"</td>"+
@@ -482,6 +537,7 @@ function paintRuns(items){
       if(state.mode==="server") loadServerRunDetail(id);
       else { var r=state.runs.filter(function(x){return x.id===id;})[0]; if(r) paintRunDetail(r); }
       $("runSelect").value=String(id);
+      syncExport();
     });
   });
 }
@@ -492,6 +548,7 @@ function paintRunSelect(runs){
     : runs.map(function(r){return r.id;});
   ids.forEach(function(id){ var o=document.createElement("option"); o.value=id; o.textContent="Ejecución #"+id; s.appendChild(o); });
   if(state.run) s.value=String(state.run.id);
+  syncExport();
 }
 function loadServerRunDetail(id){
   apiGet("run&id="+id).then(function(res){
@@ -517,12 +574,19 @@ function paintRunDetail(r){
     r.hallazgos.map(function(h){return "<tr><td>"+esc(h.tabla)+"."+esc(h.columna)+" ("+esc(h.regla_etiqueta||h.regla)+")</td>"+
       "<td>"+h.incidencias+"</td><td>"+esc(estadoTxt(h.estado))+"</td></tr>";}).join("")+"</tbody></table></div>";
   $("runDetail").dataset.runId=r.id;
+  syncExport();
+}
+function syncExport(){
+  var has=!!($("runSelect").value||$("runDetail").dataset.runId);
+  $("btnExport").disabled=!has;
+  $("btnExport").title=has?"Exportar el análisis seleccionado en JSON":"Sin ejecuciones para exportar";
 }
 $("btnRefreshRuns").addEventListener("click", renderRuns);
 $("runSelect").addEventListener("change", function(){
   var id=+$("runSelect").value; if(!id) return;
   if(state.mode==="server") loadServerRunDetail(id);
   else { var r=state.runs.filter(function(x){return x.id===id;})[0]; if(r) paintRunDetail(r); }
+  syncExport();
 });
 $("btnExport").addEventListener("click", function(){
   var id=+$("runSelect").value||($("runDetail").dataset.runId?+$("runDetail").dataset.runId:0);
@@ -633,18 +697,19 @@ function paintAgentJob(){
   $("agJobId").textContent="#"+job.id+" · "+job.estado+(job.stub?" · proveedor de prueba":"");
   $("agStages").innerHTML=AG_STAGES.map(function(st){
     var s=stageState(job,st[0]);
-    return "<li class='"+s+"'><strong>"+(s==="done"?"✓ ":s==="active"?"▶ ":"○ ")+st[1]+"</strong></li>";
-  }).join("")+(job.error?"<li><strong>✕ Error ("+esc(job.codigo_error||"")+"):</strong> "+esc(job.error)+"</li>":"");
+    var word=s==="done"?"Completada":s==="active"?"En curso":"Pendiente";
+    return "<li class='"+s+"'><strong>"+st[1]+"</strong><span class='stage-state'>"+word+"</span></li>";
+  }).join("")+(job.error?"<li><strong>Error ("+esc(job.codigo_error||"")+ "):</strong> "+esc(job.error)+"</li>":"");
   var can=job.estado==="en_ejecucion"||job.estado==="esperando_revision";
   $("btnAgentCancel").disabled=!can;
   // Revisiones pendientes
   var rv=$("agReviews"); rv.innerHTML="";
   (job.revisiones||[]).filter(function(r){return (r.estado||"pendiente")==="pendiente";}).forEach(function(r){
     var d=document.createElement("div"); d.className="review-card";
-    d.innerHTML="<h3>⏸ Revisión humana solicitada</h3><p>"+esc(r.motivo||"")+"</p>"+
+    d.innerHTML="<h3>Revisión humana solicitada</h3><p>"+esc(r.motivo||"")+"</p>"+
       "<label>Comentario (máx. 1000)<textarea id='agRevComment' maxlength='1000'></textarea></label>"+
-      "<div class='dec-actions'><button class='btn primary' id='agApprove'>✓ Aprobar y reanudar</button>"+
-      "<button class='btn' id='agReject'>✕ Rechazar</button></div>";
+      "<div class='dec-actions'><button class='btn primary' id='agApprove'>Aprobar y reanudar</button>"+
+      "<button class='btn danger' id='agReject'>Rechazar</button></div>";
     rv.appendChild(d);
     $("agApprove").addEventListener("click", function(){ agentReview(job.id,"approve"); });
     $("agReject").addEventListener("click", function(){ agentReview(job.id,"reject"); });
@@ -652,20 +717,20 @@ function paintAgentJob(){
   // Determinista frente a IA
   var det=job.determinista||null, recs=job.recomendaciones||job.recomendaciones_draft||[];
   var html="";
-  if(det) html+="<p><span class='badge det'>✓ Determinista</span> "+det.comprobaciones+" comprobaciones · "+det.incidencias+" incidencias · índice <strong>"+det.indice+"%</strong> (análisis #"+(job.run_id||"—")+")</p>";
+  if(det) html+="<p><span class='badge det'>Determinista</span> "+det.comprobaciones+" comprobaciones · "+det.incidencias+" incidencias · índice <strong>"+det.indice+"%</strong> (análisis #"+(job.run_id||"—")+")</p>";
   if(recs.length) html+="<table><thead><tr><th>Ref.</th><th>Acción propuesta</th><th>Prioridad</th></tr></thead><tbody>"+
     recs.map(function(r){
       var ref=r.ref_hallazgo||((r.tabla||"")+"."+(r.columna||"")+"."+(r.regla||""));
-      return "<tr><td><code>"+esc(ref)+"</code> <span class='badge ia'>🤖 IA</span></td><td>"+esc(r.accion||"")+"</td><td>"+esc(r.prioridad||"")+"</td></tr>";
+      return "<tr><td><code>"+esc(ref)+"</code> <span class='badge ia'>IA</span></td><td>"+esc(r.accion||"")+"</td><td>"+esc(r.prioridad||"")+"</td></tr>";
     }).join("")+"</tbody></table>";
-  else html+="<p class='muted'>Aún no hay recomendaciones. Las propuestas con 🤖 IA son del modelo; las cifras con ✓ vienen del motor.</p>";
+  else html+="<p class='muted'>Aún no hay recomendaciones. Las propuestas con la marca IA son del modelo; las cifras deterministas vienen del motor.</p>";
   $("agVerdict").innerHTML=html;
   // Herramientas
   var tools=job.herramientas||[];
   $("agTools").innerHTML=tools.length?"<table><thead><tr><th>Agente</th><th>Herramienta</th><th>Resultado</th><th></th></tr></thead><tbody>"+
     tools.map(function(t){
       return "<tr><td>"+esc(t.agente||t.AGENTE||"")+"</td><td><code>"+esc(t.herramienta||t.HERRAMIENTA||"")+"</code></td>"+
-      "<td class='small'>"+esc((t.resumen||t.RESUMEN||"").slice(0,160))+"</td><td>"+((t.ok===1||t.ok===true)?"✓":"✕")+"</td></tr>";
+      "<td class='small'>"+esc((t.resumen||t.RESUMEN||"").slice(0,160))+"</td><td>"+((t.ok===1||t.ok===true)?"Correcto":"Error")+"</td></tr>";
     }).join("")+"</tbody></table>":"<p class='empty'>Ninguna todavía.</p>";
   var u=job.uso||{};
   $("agUsage").textContent=u.llamadas_modelo?("Modelo: "+u.llamadas_modelo+" llamadas · "+(u.total||0)+" tokens reportados"+(job.stub?" (prueba, sin costo)":"")+"."):"";
@@ -780,7 +845,7 @@ function openProfile(){
   } else if(!u){
     A.innerHTML="<button class='btn primary' data-p='enter'>Entrar a la aplicación</button>"+
       "<button class='btn' data-p='login'>Iniciar sesión</button>"+
-      "<button class='btn ghost' data-p='register'>Registrarse</button>";
+      "<button class='btn link' data-p='register'>Crear cuenta</button>";
   } else {
     A.innerHTML="<button class='btn primary' data-p='enter'>Entrar a la aplicación</button>"+
       "<button class='btn' data-p='account'>Ver mi perfil</button>"+
@@ -833,10 +898,12 @@ $("formLogin").addEventListener("submit", function(ev){
   ok=setErr($("liPass"),"liPassErr",pw?"":"Escribe tu contraseña.")&&ok;
   if(!ok) return;
   setErr(null,"loginErr","");
+  var sub=$("formLogin").querySelector("[type=submit]"); sub.disabled=true;
   apiPost("auth_login", {email:em, password:pw}).then(function(res){
+    sub.disabled=false;
     if(res.code>=200&&res.code<300){ setUser(res.body.user); closeModals(); $("formLogin").reset(); toast("Hola, "+res.body.user.nombre.split(" ")[0]+"."); enterApp(); }
     else setErr(null,"loginErr",res.body.error||"No se pudo entrar.");
-  }).catch(function(){ setErr(null,"loginErr","Sin conexión con el servicio."); });
+  }).catch(function(){ sub.disabled=false; setErr(null,"loginErr","Sin conexión con el servicio."); });
 });
 $("formRegister").addEventListener("submit", function(ev){
   ev.preventDefault();
@@ -850,10 +917,22 @@ $("formRegister").addEventListener("submit", function(ev){
   ok=setErr($("rgPass2"),"rgPass2Err",p1===p2?"":"Las contraseñas no coinciden.")&&ok;
   if(!ok) return;
   setErr(null,"regErr","");
+  var sub2=$("formRegister").querySelector("[type=submit]"); sub2.disabled=true;
   apiPost("auth_register", {nombre:nm, email:em, password:p1}).then(function(res){
+    sub2.disabled=false;
     if(res.code===201){ setUser(res.body.user); closeModals(); $("formRegister").reset(); paintStrength(); toast("Cuenta creada. Hola, "+res.body.user.nombre.split(" ")[0]+"."); enterApp(); }
     else setErr(null,"regErr",res.body.error||"No se pudo registrar.");
-  }).catch(function(){ setErr(null,"regErr","Sin conexión con el servicio."); });
+  }).catch(function(){ sub2.disabled=false; setErr(null,"regErr","Sin conexión con el servicio."); });
+});
+document.querySelectorAll(".pw-toggle").forEach(function(btn){
+  btn.addEventListener("click", function(){
+    var input=$(btn.getAttribute("data-for"));
+    var show=input.type==="password";
+    input.type=show?"text":"password";
+    btn.setAttribute("aria-pressed", show?"true":"false");
+    btn.setAttribute("aria-label", show?"Ocultar contraseña":"Mostrar contraseña");
+    btn.textContent=show?"Ocultar":"Mostrar";
+  });
 });
 function refreshSession(){
   if(state.mode==="demo"){ setUser(null); return; }

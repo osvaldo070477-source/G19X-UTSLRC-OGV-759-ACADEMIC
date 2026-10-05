@@ -136,7 +136,7 @@ tu nombre, correo y estado de sesión; no aparece en la barra principal.
 - **Correo:** `usuario@dominio.extensión`; vacíos excluidos.
 - Índice = `redondear((comprobaciones − incidencias) / comprobaciones × 100)`; sin comprobaciones = «Sin evaluar».
 - `row_id` (técnica, única) ≠ `id` (negocio, con duplicado intencional `CLI-004`).
-- Verificación: `python tests/test_rules.py`, `python tests/test_agents.py` y `python scripts/check.py`.
+- Verificación: `python tests/test_rules.py`, `python tests/test_agents.py`, `python tests/test_auth.py`, `python scripts/check.py` y `python scripts/check_ui.py`.
 
 ## 9. Seguridad local
 
