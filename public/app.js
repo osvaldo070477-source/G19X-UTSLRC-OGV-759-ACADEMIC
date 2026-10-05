@@ -201,15 +201,15 @@ document.addEventListener("click", function(e){
 
 /* ---------- Detección de modo ---------- */
 function setModeBadge(){
-  var b=$("modeBadge"), f=$("footMode");
+  var s=$("modeState"), t=$("modeTech"), f=$("footMode");
   if(state.mode==="demo"){
-    b.textContent="Modo demostración — datos de ejemplo";
+    s.textContent="Modo demostración"; t.textContent="Navegador · datos de ejemplo";
     f.textContent="modo demostración (navegador, sin servidor)";
   } else if(state.serverMode==="mysql"){
-    b.textContent="Modo conectado — PHP · Python · MySQL";
+    s.textContent="Modo conectado"; t.textContent="PHP · Python · MySQL";
     f.textContent="modo conectado (MySQL)";
   } else {
-    b.textContent="Modo local — PHP · Python (memoria)";
+    s.textContent="Modo local"; t.textContent="PHP · Python · memoria";
     f.textContent="modo local (la memoria se pierde al reiniciar)";
   }
 }

@@ -1,7 +1,6 @@
 /* NEXO — sistema visual. Paleta exacta del proyecto, variables y componentes compartidos. */
 :root{
-  --navy:#0b3a5c; --petrol:#0e5f6b; --teal:#14b8a6; --teal-d:#0e8a7d;
-  --bg:#f2f6fa; --card:#ffffff; --ink:#102a43; --muted:#5b6b7c;
+  --navy:#0b3a5c; --petrol:#0e5f6b; --teal:#14b8a6; --teal-d:#0e8a7d;  --bg:#f2f6fa; --card:#ffffff; --ink:#102a43; --muted:#5b6b7c;
   --line:#d9e4ee; --field:#eef4f9;
   --alta:#b42318; --media:#9a6700; --baja:#1a6fd4; --ok:#15803d;
   --teal-ink:#04292a; --ring:#0b3a5c; --ring-dark:#8ff0e2;
@@ -26,25 +25,32 @@ p{margin:0 0 var(--s3)}
 :focus-visible{outline:3px solid var(--ring);outline-offset:2px;border-radius:6px}
 .sidebar :focus-visible{outline-color:var(--ring-dark)}
 
-/* Estructura: barra lateral + columna principal */
-.shell{display:grid;grid-template-columns:244px minmax(0,1fr);min-height:100dvh}
-.sidebar{background:var(--navy);color:#dcebf5;display:flex;flex-direction:column;
-  position:sticky;top:0;height:100dvh;z-index:30}
-.side-brand{display:flex;gap:var(--s3);align-items:center;padding:20px 18px 16px}
+/* Estructura: panel lateral flotante + columna principal */
+.shell{display:grid;grid-template-columns:auto minmax(0,1fr);min-height:100dvh}
+.sidebar{background:var(--navy);color:#dcebf5;width:240px;flex:none;
+  border-radius:16px;border:1px solid rgba(255,255,255,.12);
+  box-shadow:0 10px 30px rgba(11,58,92,.18);
+  margin:var(--s4) 0 var(--s4) var(--s4);padding:var(--s4) var(--s3);
+  display:flex;flex-direction:column;
+  align-self:start;position:sticky;top:var(--s4);
+  max-height:calc(100dvh - var(--s8));overflow-y:auto;z-index:30}
+.side-brand{display:flex;gap:var(--s3);align-items:center;padding:var(--s2) var(--s1) var(--s3)}
+.side-sep{border:0;border-top:1px solid rgba(255,255,255,.14);margin:12px var(--s1)}
+.side-label{margin:0 var(--s1) 6px;font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:#8fb4c7}
+.sidenav{display:flex;flex-direction:column;gap:var(--s1)}
+.sidenav button{display:flex;align-items:center;gap:var(--s3);width:100%;background:transparent;border:0;
+  color:#cfe3ee;font:inherit;font-weight:600;font-size:.93rem;text-align:left;cursor:pointer;
+  min-height:44px;padding:10px var(--s3);border-radius:10px;transition:background-color .18s ease,color .18s ease}
+.sidenav button svg{width:20px;height:20px;flex:none;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.sidenav button:hover{background:rgba(255,255,255,.06);color:#fff}
+.sidenav button[aria-current="page"]{background:var(--petrol);color:#fff;box-shadow:inset 3px 0 0 var(--teal)}
+.side-env{margin:0}
+.side-env-title{margin:0 0 2px;font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:#8fb4c7}
+.side-env-state{margin:0;font-size:.85rem;font-weight:700;color:#fff}
+.side-env-tech{margin:2px 0 0;font-size:.78rem;color:#8fb4c7;overflow-wrap:anywhere}
 .logo{width:40px;height:40px;flex:none;color:var(--teal)}
 .brand-name{margin:0;font-size:1.25rem;letter-spacing:.12em;font-weight:800;color:#fff}
 .brand-sub{margin:0;font-size:.75rem;color:#a9c6d8}
-.brand-sub{margin:0;font-size:.75rem;color:#a9c6d8}
-.sidenav{display:flex;flex-direction:column;gap:var(--s1);padding:var(--s2) var(--s3);flex:1}
-.sidenav button{display:flex;align-items:center;gap:var(--s3);width:100%;background:transparent;border:0;
-  color:#cfe3ee;font:inherit;font-weight:600;font-size:.95rem;text-align:left;cursor:pointer;
-  padding:11px var(--s4);border-radius:10px;transition:background-color .18s ease,color .18s ease}
-.sidenav button svg{width:20px;height:20px;flex:none;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
-.sidenav button:hover{background:rgba(255,255,255,.08);color:#fff}
-.sidenav button[aria-current="page"]{background:rgba(20,184,166,.18);color:#fff;box-shadow:inset 3px 0 0 var(--teal)}
-.side-env{border-top:1px solid rgba(255,255,255,.15);padding:var(--s4) 18px}
-.side-env-title{margin:0 0 var(--s1);font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:#8fb4c7}
-.side-env-state{margin:0;font-size:.82rem;color:#dcebf5}
 .main-col{display:flex;flex-direction:column;min-width:0}
 .topbar{background:var(--card);border-bottom:1px solid var(--line);min-height:68px;
   display:flex;align-items:center;gap:var(--s4);padding:var(--s2) var(--s6);position:sticky;top:0;z-index:20}
@@ -266,8 +272,8 @@ tbody tr:hover{background:#f4fbf9}
   main{padding:var(--s4)}
   .topbar{padding:var(--s2) var(--s4)}
   #menuBtn{display:inline-flex;align-items:center;justify-content:center}
-  .sidebar{position:fixed;left:0;top:0;bottom:0;width:min(280px,84vw);height:100dvh;
-    transform:translateX(-105%);transition:transform .2s ease}
+  .sidebar{position:fixed;left:var(--s3);top:var(--s3);bottom:var(--s3);width:min(280px,84vw);
+    margin:0;max-height:none;transform:translateX(calc(-100% - var(--s3)));transition:transform .2s ease}
   body.nav-open .sidebar{transform:none}
   #tab-catalogo .toolbar{grid-template-columns:minmax(0,1fr)}
   .stats{grid-template-columns:repeat(2,minmax(0,1fr))}

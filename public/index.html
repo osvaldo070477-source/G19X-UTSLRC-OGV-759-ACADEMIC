@@ -41,6 +41,8 @@
         <p class="brand-sub">Gobierno de datos</p>
       </div>
     </div>
+    <hr class="side-sep">
+    <p class="side-label">Navegación</p>
     <nav class="sidenav" aria-label="Secciones de NEXO">
       <button data-tab="observatorio" aria-current="page"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 13l4-5 3 3 4-7" /><path d="M3 17h14" /></svg>Observatorio</button>
       <button data-tab="catalogo"><svg viewBox="0 0 20 20" aria-hidden="true"><ellipse cx="10" cy="5" rx="6" ry="2.5" /><path d="M4 5v10c0 1.4 2.7 2.5 6 2.5s6-1.1 6-2.5V5" /><path d="M4 10c0 1.4 2.7 2.5 6 2.5s6-1.1 6-2.5" /></svg>Catálogo</button>
@@ -49,9 +51,11 @@
       <button data-tab="bitacora"><svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="7" /><path d="M10 6v4.5l3 2" /></svg>Bitácora</button>
       <button data-tab="agentes"><svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="5" cy="5" r="2" /><circle cx="15" cy="5" r="2" /><circle cx="10" cy="15" r="2" /><path d="M6.5 6.5L8.8 13M13.5 6.5L11.2 13M7 5h6" /></svg>Agentes</button>
     </nav>
+    <hr class="side-sep">
     <div class="side-env">
       <p class="side-env-title">Entorno</p>
-      <p id="modeBadge" class="side-env-state" role="status">Detectando modo…</p>
+      <p id="modeState" class="side-env-state" role="status">Detectando modo…</p>
+      <p id="modeTech" class="side-env-tech"></p>
     </div>
   </aside>
 
