@@ -242,19 +242,20 @@ tbody tr:hover{background:#f4fbf9}
 
 /* Portada */
 #welcome{position:fixed;inset:0;z-index:30;overflow:auto;padding:var(--s6) var(--s4);
-  background:linear-gradient(140deg,var(--navy) 0%,var(--petrol) 60%,var(--teal-d) 100%)}
-.welcome-inner{max-width:980px;margin:auto;display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,.8fr);
-  gap:var(--s8);align-items:center;min-height:calc(100dvh - var(--s12))}
-.welcome-id{color:#fff}
+  background:linear-gradient(160deg,var(--navy) 0%,var(--petrol) 60%,var(--teal-d) 100%);
+  display:flex;align-items:center;justify-content:center;
+  min-height:100vh;min-height:100dvh}
+.welcome-inner{width:min(560px,100%);margin:auto;display:flex;flex-direction:column;
+  align-items:center;gap:var(--s6);text-align:center}
+.welcome-id{display:flex;flex-direction:column;align-items:center;gap:var(--s2);color:#fff}
 .welcome-id .logo{color:var(--teal)}
 .logo-xl{width:56px;height:56px}
-.welcome-id .brand-name{font-size:1.6rem}
-.welcome-kicker{margin:var(--s4) 0 var(--s2);font-size:.78rem;text-transform:uppercase;letter-spacing:.14em;color:#9fd8cf;font-weight:700}
-.welcome-id h1{color:#fff;max-width:16em}
-.welcome-sub{color:#cfe3ee;max-width:30em}
-.welcome-nodes{width:min(320px,80%);color:#5ec9b8;margin-top:var(--s4)}
-.welcome-access{background:#fff;border-radius:18px;padding:var(--s8) var(--s8);display:grid;gap:var(--s3);align-content:start}
-.welcome-access h2{margin:0}
+.welcome-id .brand-name{font-size:1.4rem}
+.welcome-id h1{color:#fff;max-width:20em}
+.welcome-sub{color:#cfe3ee;max-width:32em;margin:0}
+.welcome-access{background:#fff;border-radius:18px;padding:var(--s6);
+  width:min(440px,100%);display:grid;gap:var(--s3);align-content:start;
+  box-shadow:0 24px 70px rgba(0,0,0,.35);border-top:8px solid var(--teal)}
 .welcome-access .muted{margin:0}
 
 /* Perfil */
@@ -277,8 +278,8 @@ tbody tr:hover{background:#f4fbf9}
   body.nav-open .sidebar{transform:none}
   #tab-catalogo .toolbar{grid-template-columns:minmax(0,1fr)}
   .stats{grid-template-columns:repeat(2,minmax(0,1fr))}
-  .welcome-inner{grid-template-columns:minmax(0,1fr);gap:var(--s6);min-height:0}
-  .welcome-nodes{display:none}
+  .welcome-inner{gap:var(--s4)}
+  #welcome{padding:var(--s4)}
   .top-title p{display:none}
 }
 @media (prefers-reduced-motion:reduce){

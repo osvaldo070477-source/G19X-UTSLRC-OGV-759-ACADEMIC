@@ -101,6 +101,7 @@ class MemoryAuthStore:
         self.seq[0] += 1
         user = {"id": self.seq[0], "nombre": nombre, "email": email,
                 "pw_hash": pw_hash, "failed": 0, "locked_until": 0,
+                "rol": "operador", "estado": "activo",
                 "creado_en": time.strftime("%Y-%m-%d %H:%M:%S")}
         self.users[email.lower()] = user
         return user
@@ -141,14 +142,15 @@ class MysqlAuthStore:
         conn = self._connect()
         try:
             cur = conn.cursor(dictionary=True)
-            cur.execute("SELECT id, nombre, email, pw_hash, failed_attempts, locked_until "
+            cur.execute("SELECT id, nombre, email, pw_hash, failed_attempts, locked_until, rol, estado "
                         "FROM users WHERE email=%s", (email.lower(),))
             r = cur.fetchone()
             if not r:
                 return None
             return {"id": r["id"], "nombre": r["nombre"], "email": r["email"],
                     "pw_hash": r["pw_hash"], "failed": r["failed_attempts"] or 0,
-                    "locked_until": (r["locked_until"] or 0)}
+                    "locked_until": (r["locked_until"] or 0),
+                    "rol": r.get("rol") or "operador", "estado": r.get("estado") or "activo"}
         finally:
             conn.close()
 
@@ -205,14 +207,15 @@ class MysqlAuthStore:
         conn = self._connect()
         try:
             cur = conn.cursor(dictionary=True)
-            cur.execute("SELECT id, nombre, email, pw_hash, failed_attempts, locked_until "
+            cur.execute("SELECT id, nombre, email, pw_hash, failed_attempts, locked_until, rol, estado "
                         "FROM users WHERE id=%s", (uid,))
             r = cur.fetchone()
             if not r:
                 return None
             return {"id": r["id"], "nombre": r["nombre"], "email": r["email"],
                     "pw_hash": r["pw_hash"], "failed": r["failed_attempts"] or 0,
-                    "locked_until": (r["locked_until"] or 0)}
+                    "locked_until": (r["locked_until"] or 0),
+                    "rol": r.get("rol") or "operador", "estado": r.get("estado") or "activo"}
         finally:
             conn.close()
 
@@ -232,7 +235,8 @@ class AuthService:
 
     @staticmethod
     def public(user):
-        return {"id": user["id"], "nombre": user["nombre"], "email": user["email"]}
+        return {"id": user["id"], "nombre": user["nombre"], "email": user["email"],
+                "rol": user.get("rol") or "operador"}
 
     def user_public(self, uid):
         user = self.store.get_user(uid)
@@ -276,7 +280,7 @@ class AuthService:
             mins = int((user["locked_until"] - time.time()) // 60) + 1
             raise AuthError("cuenta_bloqueada",
                             f"Cuenta bloqueada por intentos fallidos. Intenta de nuevo en ~{mins} min.")
-        ok = bool(user) and check_password(password, user["pw_hash"])
+        ok = bool(user) and user.get("estado", "activo") == "activo" and check_password(password, user["pw_hash"])
         if not ok:
             if user:
                 user["failed"] = user.get("failed", 0) + 1

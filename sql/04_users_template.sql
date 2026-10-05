@@ -1,14 +1,20 @@
 -- NEXO · plantilla de usuarios MySQL (edítala antes de ejecutarla).
 -- No contiene contraseñas reales: sustituye CADA 'PON...' por valores propios.
 -- Ejecutar como administrador en el cliente mysql, línea por línea.
+-- La fuente es de SOLO LECTURA y la app escribe únicamente en nexo_app
+-- con los permisos mínimos de sql/07_permisos.sql (aplícalo después).
 --
 -- Lector de la fuente (el servicio Python solo consulta nexo_source):
 --   CREATE USER 'nexo_ro'@'127.0.0.1' IDENTIFIED BY 'PON_CONTRASEÑA_LECTURA';
+--   CREATE USER 'nexo_ro'@'localhost' IDENTIFIED BY 'PON_CONTRASEÑA_LECTURA';
 --   GRANT SELECT ON nexo_source.* TO 'nexo_ro'@'127.0.0.1';
+--   GRANT SELECT ON nexo_source.* TO 'nexo_ro'@'localhost';
 --
--- Escritor de resultados (solo registra en nexo_app, nunca toca la fuente):
+-- Escritor de resultados (permisos base; luego refina con 07_permisos.sql):
 --   CREATE USER 'nexo_app'@'127.0.0.1' IDENTIFIED BY 'PON_CONTRASEÑA_APP';
---   GRANT SELECT, INSERT ON nexo_app.* TO 'nexo_app'@'127.0.0.1';
+--   CREATE USER 'nexo_app'@'localhost' IDENTIFIED BY 'PON_CONTRASEÑA_APP';
+--   GRANT SELECT, INSERT, UPDATE, DELETE ON nexo_app.* TO 'nexo_app'@'127.0.0.1';
+--   GRANT SELECT, INSERT, UPDATE, DELETE ON nexo_app.* TO 'nexo_app'@'localhost';
 --
 --   FLUSH PRIVILEGES;
 --

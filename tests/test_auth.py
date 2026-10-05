@@ -52,10 +52,14 @@ class TestServicio(unittest.TestCase):
         s = svc()
         user, token = s.register("Ana Beltrán", "ana@example.com", "Segura123")
         self.assertEqual(user["nombre"], "Ana Beltrán")
+        self.assertEqual(user["rol"], "operador")
         self.assertTrue(token)
         user2, _ = s.login("ANA@example.com", "Segura123")
         self.assertEqual(user2["id"], user["id"])
-        self.assertEqual(s.user_public(user["id"])["email"], "ana@example.com")
+        pub = s.user_public(user["id"])
+        self.assertEqual(pub["email"], "ana@example.com")
+        self.assertEqual(pub["rol"], "operador")
+        self.assertNotIn("pw_hash", pub)
 
     def test_duplicado(self):
         s = svc()

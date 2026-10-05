@@ -3,7 +3,10 @@
 // La sesión de usuario vive en $_SESSION del servidor; el navegador solo
 // recibe el perfil público (id, nombre, email), nunca el token de sesión.
 declare(strict_types=1);
+// Cookies de sesión solo HTTP (nunca JavaScript) y válidas en HTTP local:
+// sin 'secure' para no romper el desarrollo en http://127.0.0.1.
 if (session_status() === PHP_SESSION_NONE) {
+    session_set_cookie_params(['httponly' => true, 'secure' => false, 'samesite' => 'Lax']);
     session_start();
 }
 
@@ -174,9 +177,11 @@ if (isset($http_response_header[0]) && preg_match('#\s(\d{3})\s#', $http_respons
     $code = (int)$m[1];
 }
 // El token de sesión vive en el servidor: se guarda aquí y nunca sale al navegador.
+// Al entrar se regenera el identificador de sesión (anti-fijación).
 if (in_array($action, ['auth_register', 'auth_login'], true) && $code >= 200 && $code < 300) {
     $payload = json_decode($res, true);
     if (is_array($payload) && !empty($payload['session'])) {
+        session_regenerate_id(true);
         $_SESSION['nexo_session'] = $payload['session'];
         $_SESSION['nexo_user'] = $payload['user'] ?? null;
         unset($payload['session']);

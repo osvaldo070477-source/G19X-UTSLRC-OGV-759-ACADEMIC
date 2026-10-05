@@ -93,6 +93,18 @@ SOURCE_CFG = dict(MYSQL_CFG, user=os.environ.get("NEXO_RO_USER", ""),
                   database="nexo_source")
 
 
+def log_internal(action, exc):
+    """Detalle técnico solo en el log protegido del servidor, nunca al usuario."""
+    try:
+        logdir = os.path.join(os.path.dirname(BASE_DIR), "logs")
+        os.makedirs(logdir, exist_ok=True)
+        with open(os.path.join(logdir, "nexo.log"), "a", encoding="utf-8") as f:
+            f.write(f"{datetime.datetime.now().isoformat(timespec='seconds')} "
+                    f"[{action}] {type(exc).__name__}: {exc}\n")
+    except OSError:
+        pass
+
+
 # ---------------- MySQL (opcional, solo modo C) ----------------
 
 def _mysql():
@@ -481,7 +493,8 @@ class Handler(BaseHTTPRequestHandler):
             except AuthError as e:
                 self._auth_error(e)
             except Exception as e:
-                self._send(502, {"error": f"No se pudo registrar: {e}"})
+                log_internal("register", e)
+                self._send(502, {"error": "No fue posible completar el registro. Inténtalo de nuevo."})
             else:
                 self._send(201, {"ok": True, "user": AuthService.public(user), "session": session})
             return
@@ -492,7 +505,8 @@ class Handler(BaseHTTPRequestHandler):
             except AuthError as e:
                 self._auth_error(e)
             except Exception as e:
-                self._send(502, {"error": f"No se pudo iniciar sesión: {e}"})
+                log_internal("login", e)
+                self._send(502, {"error": "No fue posible completar el acceso. Inténtalo de nuevo."})
             else:
                 self._send(200, {"ok": True, "user": AuthService.public(user), "session": session})
             return

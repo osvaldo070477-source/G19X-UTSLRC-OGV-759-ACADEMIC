@@ -43,14 +43,21 @@ sin `--demo` intenta MySQL según `.env` y **falla con error visible** si no hay
 
 1. Instala **MySQL 8.0+** (programa ya compilado; instalarlo no es programar en C++).
 2. Instala la única dependencia: `.\.venv\Scripts\python.exe -m pip install -r backend\requirements.txt`
-3. Crea las bases desde el cliente `mysql` (en PowerShell **no** funciona `< archivo.sql`;
-   usa `source` dentro del cliente):
+3. Crea las bases desde el cliente `mysql` como administrador (en PowerShell **no** funciona `< archivo.sql`;
+   usa `source` dentro del cliente), **en este orden**:
    ```sql
    source sql/01_schema_source.sql
    source sql/02_schema_app.sql
    source sql/03_seed_source.sql
    -- sql/04_users_template.sql es plantilla: edita las contraseñas antes de ejecutarla
+   source sql/05_agentic.sql
+   source sql/06_auth.sql
+   source sql/07_permisos.sql
+   source sql/08_usuarios_rol.sql
    ```
+   El paso `07_permisos.sql` es obligatorio: sin él, el acceso falla con error
+   1142 porque la cuenta de aplicación no puede actualizar intentos de acceso
+   ni sesiones. Si `08` marca error 1060 (columna duplicada), ignóralo.
 4. Copia `.env.example` o genera `.env` con `python scripts/gen_env.py` y anota las contraseñas reales.
 5. Inicia Python **sin** `--demo` y PHP como en el punto 2. Verás **«Modo conectado — PHP · Python · MySQL»**.
 
