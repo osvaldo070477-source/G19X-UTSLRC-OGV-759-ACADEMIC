@@ -1,0 +1,31 @@
+name: CI NEXO
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.4"
+      - name: Pruebas Python
+        run: |
+          python tests/test_rules.py
+          python tests/test_agents.py
+          python tests/test_auth.py
+      - name: Comprobadores
+        run: |
+          python scripts/check.py
+          python scripts/check_ui.py
+      - name: Sintaxis PHP
+        run: |
+          php -l public/api.php
+          php -l public/index.php
+          php -l server/router.php
