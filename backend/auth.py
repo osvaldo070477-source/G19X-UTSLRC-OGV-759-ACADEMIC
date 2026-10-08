@@ -109,6 +109,22 @@ class MemoryAuthStore:
     def update_user(self, user):
         self.users[user["email"].lower()] = user
 
+    def set_nombre(self, uid, nombre):
+        for u in self.users.values():
+            if u["id"] == uid:
+                u["nombre"] = nombre
+                return u
+        return None
+
+    def set_password(self, uid, pw_hash):
+        for u in self.users.values():
+            if u["id"] == uid:
+                u["pw_hash"] = pw_hash
+                u["failed"] = 0
+                u["locked_until"] = 0
+                return True
+        return False
+
     def insert_session(self, user_id, thash, expira):
         self.sessions[thash] = {"user_id": user_id, "expira": expira}
 
@@ -142,15 +158,16 @@ class MysqlAuthStore:
         conn = self._connect()
         try:
             cur = conn.cursor(dictionary=True)
-            cur.execute("SELECT id, nombre, email, pw_hash, failed_attempts, locked_until, rol, estado "
-                        "FROM users WHERE email=%s", (email.lower(),))
+            cur.execute("SELECT id, nombre, email, pw_hash, failed_attempts, locked_until, rol, estado, "
+                        "creado_en FROM users WHERE email=%s", (email.lower(),))
             r = cur.fetchone()
             if not r:
                 return None
             return {"id": r["id"], "nombre": r["nombre"], "email": r["email"],
                     "pw_hash": r["pw_hash"], "failed": r["failed_attempts"] or 0,
                     "locked_until": (r["locked_until"] or 0),
-                    "rol": r.get("rol") or "operador", "estado": r.get("estado") or "activo"}
+                    "rol": r.get("rol") or "operador", "estado": r.get("estado") or "activo",
+                    "creado_en": str(r.get("creado_en") or "")}
         finally:
             conn.close()
 
@@ -174,6 +191,45 @@ class MysqlAuthStore:
             cur.execute("UPDATE users SET failed_attempts=%s, locked_until=%s WHERE id=%s",
                         (user["failed"], user["locked_until"], user["id"]))
             conn.commit()
+        finally:
+            conn.close()
+
+    def set_nombre(self, uid, nombre):
+        conn = self._connect()
+        try:
+            cur = conn.cursor()
+            cur.execute("UPDATE users SET nombre=%s WHERE id=%s", (nombre, uid))
+            ok = cur.rowcount == 1
+            conn.commit()
+            return ok
+        finally:
+            conn.close()
+
+    def set_password(self, uid, pw_hash):
+        conn = self._connect()
+        try:
+            cur = conn.cursor()
+            cur.execute("UPDATE users SET pw_hash=%s, failed_attempts=0, locked_until=0 WHERE id=%s",
+                        (pw_hash, uid))
+            ok = cur.rowcount == 1
+            conn.commit()
+            return ok
+        finally:
+            conn.close()
+
+    def user_activity(self, uid, limit=10, offset=0):
+        conn = self._connect()
+        try:
+            cur = conn.cursor(dictionary=True)
+            cur.execute("SELECT COUNT(*) AS total FROM decision_events WHERE decided_by=%s", (uid,))
+            total = cur.fetchone()["total"]
+            cur.execute(
+                "SELECT de.accion, de.comentario, de.creado_en, f.tabla, f.columna, f.regla, f.run_id "
+                "FROM decision_events de JOIN findings f ON f.id=de.finding_id "
+                "WHERE de.decided_by=%s ORDER BY de.id DESC LIMIT %s OFFSET %s",
+                (uid, limit, offset))
+            items = [dict(r, creado_en=str(r.get("creado_en"))) for r in cur.fetchall()]
+            return {"items": items, "total": total}
         finally:
             conn.close()
 
@@ -207,15 +263,16 @@ class MysqlAuthStore:
         conn = self._connect()
         try:
             cur = conn.cursor(dictionary=True)
-            cur.execute("SELECT id, nombre, email, pw_hash, failed_attempts, locked_until, rol, estado "
-                        "FROM users WHERE id=%s", (uid,))
+            cur.execute("SELECT id, nombre, email, pw_hash, failed_attempts, locked_until, rol, estado, "
+                        "creado_en FROM users WHERE id=%s", (uid,))
             r = cur.fetchone()
             if not r:
                 return None
             return {"id": r["id"], "nombre": r["nombre"], "email": r["email"],
                     "pw_hash": r["pw_hash"], "failed": r["failed_attempts"] or 0,
                     "locked_until": (r["locked_until"] or 0),
-                    "rol": r.get("rol") or "operador", "estado": r.get("estado") or "activo"}
+                    "rol": r.get("rol") or "operador", "estado": r.get("estado") or "activo",
+                    "creado_en": str(r.get("creado_en") or "")}
         finally:
             conn.close()
 
@@ -230,13 +287,21 @@ class MysqlAuthStore:
 
 
 class AuthService:
-    def __init__(self, store):
+    def __init__(self, store, runs_provider=None):
         self.store = store
+        self.runs_provider = runs_provider or (lambda: [])
 
     @staticmethod
     def public(user):
         return {"id": user["id"], "nombre": user["nombre"], "email": user["email"],
                 "rol": user.get("rol") or "operador"}
+
+    @staticmethod
+    def profile_data(user):
+        return {"id": user["id"], "nombre": user["nombre"], "email": user["email"],
+                "rol": user.get("rol") or "operador",
+                "estado": user.get("estado") or "activo",
+                "creado_en": str(user.get("creado_en") or "")}
 
     def user_public(self, uid):
         user = self.store.get_user(uid)
@@ -304,3 +369,54 @@ class AuthService:
     def logout(self, token):
         if token:
             self.store.delete_session(token_hash(token))
+
+    def profile(self, token):
+        user = self.store.get_user(self.me(token))
+        if not user:
+            raise AuthError("sesion_invalida", "Sesión vencida o inválida.")
+        return self.profile_data(user)
+
+    def update_nombre(self, token, nombre):
+        uid = self.me(token)
+        nombre, err = validate_nombre(nombre)
+        if err:
+            raise AuthError("datos_invalidos", err)
+        if not self.store.set_nombre(uid, nombre):
+            raise AuthError("sesion_invalida", "Sesión vencida o inválida.")
+        return self.profile_data(self.store.get_user(uid))
+
+    def change_password(self, token, actual, nueva):
+        uid = self.me(token)
+        user = self.store.get_user(uid)
+        if not user or not check_password(actual or "", user["pw_hash"]):
+            raise AuthError("credenciales_invalidas", "La contraseña actual no es correcta.")
+        err = validate_password(nueva)
+        if err:
+            raise AuthError("datos_invalidos", err)
+        if not self.store.set_password(uid, hash_password(nueva)):
+            raise AuthError("sesion_invalida", "Sesión vencida o inválida.")
+        return True
+
+    def activity(self, token, limit=10, offset=0):
+        uid = self.me(token)
+        try:
+            limit = max(1, min(50, int(limit)))
+        except (TypeError, ValueError):
+            limit = 10
+        try:
+            offset = max(0, int(offset))
+        except (TypeError, ValueError):
+            offset = 0
+        if hasattr(self.store, "user_activity"):
+            return self.store.user_activity(uid, limit, offset)
+        items = []
+        for run in reversed(self.runs_provider()):
+            for h in run.get("hallazgos", []):
+                for ev in h.get("eventos", []):
+                    por = ev.get("por") or {}
+                    if por.get("id") == uid:
+                        items.append({"accion": ev.get("accion"), "comentario": ev.get("comentario"),
+                                      "creado_en": ev.get("creado_en"), "tabla": h.get("tabla"),
+                                      "columna": h.get("columna"), "regla": h.get("regla"),
+                                      "run_id": run.get("id")})
+        return {"items": items[offset:offset + limit], "total": len(items)}

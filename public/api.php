@@ -9,6 +9,9 @@ if (session_status() === PHP_SESSION_NONE) {
     session_set_cookie_params(['httponly' => true, 'secure' => false, 'samesite' => 'Lax']);
     session_start();
 }
+if (empty($_SESSION['csrf'])) {
+    $_SESSION['csrf'] = bin2hex(random_bytes(32));
+}
 
 function nexo_env(string $key, string $default = ''): string {
     static $env = null;
@@ -84,7 +87,12 @@ $routes = [
     'auth_register' => ['POST', '/api/auth/register'],
     'auth_login'    => ['POST', '/api/auth/login'],
     'auth_me'       => ['GET', '/api/auth/me'],
+    'auth_profile'  => ['GET', '/api/auth/profile'],
+    'auth_update_name' => ['POST', '/api/auth/update_name'],
+    'auth_change_password' => ['POST', '/api/auth/change_password'],
+    'auth_activity' => ['GET', '/api/auth/activity' . '?limit=' . max(1, min(50, (int)($_GET['limit'] ?? 10))) . '&offset=' . max(0, (int)($_GET['offset'] ?? 0))],
     'auth_logout'   => ['POST', '/api/auth/logout'],
+    'auth_csrf'     => ['GET', 'local'],
 ];
 if (!isset($routes[$action])) {
     nexo_out(404, ['error' => 'Acción desconocida.']);
@@ -92,6 +100,15 @@ if (!isset($routes[$action])) {
 [$expectMethod, $pyPath] = $routes[$action];
 if ($method !== $expectMethod && !($action === 'health' && $method === 'GET')) {
     nexo_out(405, ['error' => 'Método no permitido.']);
+}
+if ($action === 'auth_csrf') {
+    nexo_out(200, ['csrf' => $_SESSION['csrf']]);
+}
+if ($expectMethod === 'POST') {
+    $sent = $_SERVER['HTTP_X_CSRF_TOKEN'] ?? '';
+    if (!hash_equals((string)$_SESSION['csrf'], (string)$sent)) {
+        nexo_out(403, ['error' => 'Sesión de formulario inválida. Recarga la página.']);
+    }
 }
 
 $body = null;
@@ -146,6 +163,23 @@ if ($expectMethod === 'POST') {
             }
         }
         $data = ['email' => $data['email'], 'password' => $data['password']];
+    }
+    if ($action === 'auth_update_name') {
+        if (!isset($data['nombre']) || !is_string($data['nombre']) || trim($data['nombre']) === '') {
+            nexo_out(400, ['error' => 'Escribe tu nombre.']);
+        }
+        $data = ['nombre' => $data['nombre']];
+    }
+    if ($action === 'auth_change_password') {
+        foreach (['actual', 'nueva'] as $f) {
+            if (!isset($data[$f]) || !is_string($data[$f]) || $data[$f] === '') {
+                nexo_out(400, ['error' => 'Escribe la contraseña actual y la nueva.']);
+            }
+        }
+        if (strlen($data['nueva']) > 72) {
+            nexo_out(400, ['error' => 'La contraseña nueva es demasiado larga.']);
+        }
+        $data = ['actual' => $data['actual'], 'nueva' => $data['nueva']];
     }
     if ($action === 'auth_logout') {
         $data = [];

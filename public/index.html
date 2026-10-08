@@ -49,22 +49,23 @@
       <button data-tab="agentes"><svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="5" cy="5" r="2" /><circle cx="15" cy="5" r="2" /><circle cx="10" cy="15" r="2" /><path d="M6.5 6.5L8.8 13M13.5 6.5L11.2 13M7 5h6" /></svg>Agentes</button>
     </nav>
     <hr class="side-sep">
-    <div class="side-env">
-      <p class="side-env-title">Entorno</p>
-      <p id="modeState" class="side-env-state" role="status">Detectando modo…</p>
+    <div class="side-foot">
+      <p class="side-env-line"><span class="dot dot-teal" aria-hidden="true"></span><span id="modeState" role="status">Detectando modo…</span></p>
       <p id="modeTech" class="side-env-tech"></p>
+      <button id="userBtn" class="user-chip" aria-haspopup="menu" aria-expanded="false" aria-controls="userMenu"><span id="userInitials" class="mini-avatar" aria-hidden="true">?</span><span id="userLabel">Invitado</span></button>
+      <div id="userMenu" role="menu" aria-label="Cuenta" hidden>
+        <button role="menuitem" data-m="profile">Mi perfil</button>
+        <button role="menuitem" data-m="logout">Cerrar sesión</button>
+      </div>
     </div>
   </aside>
 
   <div class="main-col">
-    <header class="topbar">
+    <header class="pagehead">
       <button id="menuBtn" aria-label="Abrir menú de secciones" aria-expanded="false" aria-controls="sidebar"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 5h14M3 10h14M3 15h14" /></svg></button>
       <div class="top-title">
         <h1 id="sectionTitle">Observatorio</h1>
         <p id="sectionDesc">Estado general de tus datos y último análisis.</p>
-      </div>
-      <div class="userbox">
-        <button id="userBtn" aria-haspopup="dialog"><svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="7" r="3.2" /><path d="M4 16.5c1-3.2 3.4-4.8 6-4.8s5 1.6 6 4.8" /></svg><span id="userLabel">Invitado</span></button>
       </div>
     </header>
 
@@ -72,10 +73,34 @@
     <main id="contenido">
       <!-- OBSERVATORIO -->
       <section id="tab-observatorio" class="tab" aria-label="Observatorio">
-        <div class="actions-row">
-          <button id="btnAnalyze" class="btn primary">Ejecutar análisis</button>
-          <button id="btnHow" class="btn ghost">Cómo funciona</button>
-          <p id="analyzeMsg" class="state-line" role="status"></p>
+        <div class="greet">
+          <div id="obsAvatar" class="avatar" aria-hidden="true">?</div>
+          <div>
+            <h2 id="obsHello">Hola de nuevo</h2>
+            <p class="muted"><span id="obsDate"></span> · <span id="obsMode" class="pill-gold"></span></p>
+          </div>
+        </div>
+        <div class="panel welcome-banner">
+          <div>
+            <p id="obsNext" class="muted">Explora el catálogo y ejecuta tu primer análisis.</p>
+          </div>
+          <div class="dec-actions">
+            <button id="btnAnalyze" class="btn primary">Ejecutar análisis</button>
+            <button id="btnHow" class="btn ghost">Cómo funciona</button>
+          </div>
+        </div>
+        <p id="analyzeMsg" class="state-line" role="status"></p>
+        <div id="obsEmpty" class="panel" hidden>
+          <div class="empty-state">
+            <h2>Sin evaluar todavía</h2>
+            <p>Cuando ejecutes el análisis verás aquí el índice de calidad. Sin análisis no hay puntuación: “Sin evaluar” no es un cero.</p>
+            <button class="btn primary" id="btnAnalyzeFirst">Ejecutar mi primer análisis</button>
+          </div>
+          <div class="guide-steps">
+            <button class="btn ghost" data-goto="catalogo">1 · Explora el catálogo</button>
+            <button class="btn ghost" id="guideAnalyze">2 · Ejecuta el análisis</button>
+            <button class="btn ghost" data-goto="decisiones">3 · Revisa decisiones</button>
+          </div>
         </div>
         <div id="howBox" class="howto" hidden>
           <h2>Recorrido en 5 pasos</h2>
@@ -88,7 +113,7 @@
           </ol>
           <p class="muted">Aceptar una recomendación solo registra tu decisión: no corrige los datos ni sube el índice.</p>
         </div>
-        <div class="obs-grid">
+        <div class="obs-grid" id="obsGrid">
           <div class="panel gauge-side" aria-label="Índice de calidad">
             <h2>Índice de calidad</h2>
             <svg class="gauge" viewBox="0 0 160 160" role="img" aria-labelledby="gaugeTitle gaugeVal">
@@ -246,19 +271,80 @@
 
       <!-- PERFIL -->
       <section id="tab-perfil" class="tab" aria-label="Mi perfil" hidden>
-        <div class="panel profile-card">
-          <div id="profAvatar" class="avatar" aria-hidden="true">?</div>
-          <div>
+        <div class="profile-head">
+          <div id="profAvatar" class="avatar avatar-xl" aria-hidden="true">?</div>
+          <div class="profile-id">
             <h2 id="profName">Invitado</h2>
-            <p id="profEmail" class="muted">Sin sesión iniciada.</p>
-            <p id="profState" class="muted small">Exploras como invitado: tus decisiones quedarán sin firma.</p>
+            <p id="profEmail" class="profile-sub">Sin sesión iniciada.</p>
+            <p><span id="profRole" class="badge estado">Invitado</span> <span id="profState" class="profile-state">Sin sesión</span></p>
           </div>
         </div>
-        <div class="dec-actions">
-          <button id="btnProfEnter" class="btn primary">Entrar a la aplicación</button>
+        <div class="ptabs" role="tablist" aria-label="Secciones del perfil" id="profTabs">
+          <button role="tab" id="ptab-info" aria-selected="true" aria-controls="ppanel-info" data-ptab="info">Información</button>
+          <button role="tab" id="ptab-sec" aria-selected="false" aria-controls="ppanel-sec" data-ptab="sec" tabindex="-1">Seguridad</button>
+          <button role="tab" id="ptab-act" aria-selected="false" aria-controls="ppanel-act" data-ptab="act" tabindex="-1">Mi actividad</button>
+        </div>
+        <div class="panel" role="tabpanel" id="ppanel-info" aria-labelledby="ptab-info" tabindex="0">
+          <dl class="kv" id="profInfo">
+            <dt>Nombre</dt><dd id="piName">—</dd>
+            <dt>Correo</dt><dd id="piEmail">—</dd>
+            <dt>Rol</dt><dd id="piRole">—</dd>
+            <dt>Registro</dt><dd id="piSince">—</dd>
+          </dl>
+          <h3>Cambiar nombre</h3>
+          <form id="formName" novalidate>
+            <label for="pfName">Nombre
+              <input id="pfName" type="text" autocomplete="name" maxlength="60" required>
+            </label>
+            <p class="field-err" id="pfNameErr" hidden></p>
+            <p class="state-line" id="pfNameMsg" role="status"></p>
+            <div class="dec-actions">
+              <button type="submit" class="btn primary">Guardar nombre</button>
+            </div>
+          </form>
+        </div>
+        <div class="panel" role="tabpanel" id="ppanel-sec" aria-labelledby="ptab-sec" tabindex="0" hidden>
+          <h3>Cambiar contraseña</h3>
+          <form id="formPass" novalidate>
+            <label for="pfCur">Contraseña actual
+              <span class="field-wrap">
+                <input id="pfCur" type="password" autocomplete="current-password" required>
+                <button type="button" class="pw-toggle" data-for="pfCur" aria-pressed="false" aria-label="Mostrar contraseña">Mostrar</button>
+              </span>
+            </label>
+            <p class="field-err" id="pfCurErr" hidden></p>
+            <label for="pfNew">Contraseña nueva
+              <span class="field-wrap">
+                <input id="pfNew" type="password" autocomplete="new-password" maxlength="72" required>
+                <button type="button" class="pw-toggle" data-for="pfNew" aria-pressed="false" aria-label="Mostrar contraseña">Mostrar</button>
+              </span>
+            </label>
+            <p class="muted small">Mínimo 8 caracteres, con mayúscula, minúscula y número.</p>
+            <p class="field-err" id="pfNewErr" hidden></p>
+            <label for="pfNew2">Repite la contraseña nueva
+              <input id="pfNew2" type="password" autocomplete="new-password" maxlength="72" required>
+            </label>
+            <p class="field-err" id="pfNew2Err" hidden></p>
+            <p class="state-line" id="pfPassMsg" role="status"></p>
+            <div class="dec-actions">
+              <button type="submit" class="btn primary">Guardar contraseña</button>
+            </div>
+          </form>
+        </div>
+        <div class="panel" role="tabpanel" id="ppanel-act" aria-labelledby="ptab-act" tabindex="0" hidden>
+          <div id="profActivity"><p class="empty">Sin actividad todavía.</p></div>
+          <div class="dec-actions pager">
+            <button id="actPrev" class="btn ghost">Anteriores</button>
+            <span id="actPage" class="muted small"></span>
+            <button id="actNext" class="btn ghost">Siguientes</button>
+          </div>
+        </div>
+        <div class="dec-actions" id="profGuestActions" hidden>
           <button id="btnProfLogin" class="btn">Iniciar sesión</button>
           <button id="btnProfRegister" class="btn ghost">Crear cuenta</button>
-          <button id="btnProfLogout" class="btn ghost" hidden>Cerrar sesión</button>
+        </div>
+        <div class="dec-actions" id="profUserActions" hidden>
+          <button id="btnProfLogout" class="btn ghost">Cerrar sesión</button>
         </div>
       </section>
     </main>
@@ -283,20 +369,6 @@
 
 <!-- Modales de autenticación -->
 <div id="authOverlay" class="overlay" hidden></div>
-<div id="modalProfile" class="modal" role="dialog" aria-modal="true" aria-labelledby="profTitle" hidden>
-  <div class="profile-card">
-    <div id="mAvatar" class="avatar" aria-hidden="true">?</div>
-    <div>
-      <h2 id="profTitle">Invitado</h2>
-      <p id="mEmail" class="muted"></p>
-      <p id="mState" class="muted small"></p>
-    </div>
-  </div>
-  <div id="mActions" class="dec-actions"></div>
-  <div class="dec-actions">
-    <button type="button" class="btn ghost" data-close>Cerrar</button>
-  </div>
-</div>
 <div id="modalLogin" class="modal" role="dialog" aria-modal="true" aria-labelledby="loginTitle" hidden>
   <h2 id="loginTitle">Iniciar sesión</h2>
   <form id="formLogin" novalidate>

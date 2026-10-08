@@ -121,20 +121,25 @@ sin duplicar eventos del original).
 
 ## 7. Usuarios y sesiones (local)
 
-La **portada de bienvenida** es lo primero que se ve al entrar: presenta la
-aplicación y ofrece entrar como invitado, iniciar sesión o registrarse.
-El botón 👤 de la esquina superior derecha abre el menú de usuario
-(ver **Mi perfil**, cerrar sesión o entrar). La pestaña **Perfil** muestra
-tu nombre, correo y estado de sesión; no aparece en la barra principal.
+La **portada de bienvenida** es lo primero que se ve al entrar. El botón de
+usuario abre un menú pequeño (**Mi perfil**, **Cerrar sesión**); ya no hay
+acceso de invitado en la aplicación real (solo en la demo sin servidor).
+
+La página **Mi perfil** tiene cabecera con iniciales, nombre, correo, rol y
+estado, y tres pestañas: **Información** (ficha + cambio de nombre guardado
+en MySQL), **Seguridad** (cambio de contraseña verificando la actual) y
+**Mi actividad** (tus decisiones con fecha y enlace a Bitácora, paginadas).
 
 - Registro: nombre (2–60 letras), correo válido y único, contraseña de
   8–72 caracteres con mayúscula, minúscula y número (verificada en el
-  navegador y de nuevo en el servidor).
+  navegador y de nuevo en el servidor). Rol inicial `operador`, no editable.
 - Inicio de sesión: mensajes genéricos, bloqueo de ~15 min tras 5 fallos.
 - Contraseñas con PBKDF2 + sal (nunca en texto claro); sesiones opacas de
   8 h guardadas en el servidor (PHP `$_SESSION`); el navegador solo recibe
   tu nombre y correo. Tus decisiones aceptadas quedan firmadas con tu nombre.
-- Sin MySQL todo es temporal (memoria); con MySQL aplica `sql/06_auth.sql`.
+- Toda escritura exige además el token CSRF de la sesión (`auth_csrf`).
+- Sin MySQL todo es temporal (memoria); con MySQL aplica `sql/06_auth.sql`
+  y `sql/07_permisos.sql` (obligatorio para que el acceso funcione).
 - Alcance local de un operador: no es autenticación empresarial.
 
 ## 8. Reglas y muestra
@@ -157,7 +162,7 @@ App local de un solo operador, sin autenticación empresarial.
 
 Ejecutado aquí (2026-09-21): `tests/test_rules.py` (15/15 OK),
 `tests/test_agents.py` (20/20 OK, todo con proveedor de prueba),
-`tests/test_auth.py` (10/10 OK), `scripts/check.py` (OK), flujo agentic vivo PHP→Python con stub
+`tests/test_auth.py` (14/14 OK), `scripts/check.py` (OK), `scripts/check_ui.py` (OK), flujo agentic vivo PHP→Python con stub
 (inicio, revisión, aprobación, cancelación, reintento, rechazos 409;
 trabajo #1 completado con 123/8/93 y 6 recomendaciones).
 **Cero llamadas a IA real: no hay clave configurada.**
@@ -168,5 +173,10 @@ MySQL 8.0 local verificado (2026-09-21): usuarios limitados, semilla 12/8/6,
 análisis real 123/8/93, decisión que sobrevive al reinicio del servicio.
 Ojo: el servicio Python debe iniciarse con `.\.venv\Scripts\python.exe`
 (donde está `mysql-connector-python`), y se corrigió la fecha del detalle.
+Perfil verificado vivo (2026-10-08): registro→perfil→cambio de nombre→cambio
+de clave→login con nueva→decisión→actividad propia (1/1)→logout→duplicado 400→
+clave errónea 401→login tras reinicio; fallo de BD sin éxito falso.
+Nota: un 403 aislado tras login bajo ráfagas de PowerShell no se reprodujo en
+uso normal; el CSRF rechaza correctamente peticiones sin sesión.
 Pendiente (requiere tu clave y autorización): una llamada real al proveedor
 desde el Centro de agentes.

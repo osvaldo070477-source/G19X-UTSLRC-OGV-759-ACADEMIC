@@ -37,5 +37,19 @@ css_nomotion = re.sub(r"@media\s*\(prefers-reduced-motion[^}]+\{[^}]+\}", "", cs
 check("sin !important salvo [hidden] y reduced-motion", css_nomotion.count("!important") == 1)
 check("sin emojis en la interfaz", not re.search(r"[\U0001F300-\U0001FAFF\u2600-\u27BF\u2B00-\u2BFF]", html + js))
 
+used = set()
+for m in re.findall(r'class="([^"]+)"', html):
+    used.update(m.split())
+for m in re.findall(r"class='([^']+)'", js):
+    used.update(m.split())
+defined = set(re.findall(r"\.([a-zA-Z][\w-]*)", css))
+IGNORE_CLS = {"badge", "alta", "media", "baja", "estado", "ia", "det",
+              "done", "active", "idle", "muted", "small"}
+missing_cls = sorted(u for u in used
+                     if u not in defined and u not in IGNORE_CLS and re.fullmatch(r"[A-Za-z][\w-]*", u or ""))
+check("clases usadas existen en CSS (%d)" % len(used), not missing_cls)
+for m in missing_cls:
+    print("   falta: ." + m)
+
 print("RESULTADO:", "TODO OK" if not fails else f"{len(fails)} FALLOS")
 sys.exit(0 if not fails else 1)

@@ -27,6 +27,10 @@ Rutas (prefijo /api):
   POST /api/auth/register (token) {nombre, email, password} -> {user, session}
   POST /api/auth/login    (token) {email, password} -> {user, session}
   GET  /api/auth/me       (token + sesión) perfil propio
+  GET  /api/auth/profile  (token + sesión) perfil completo con rol y registro
+  POST /api/auth/update_name (token + sesión) {nombre}
+  POST /api/auth/change_password (token + sesión) {actual, nueva}
+  GET  /api/auth/activity (token + sesión) decisiones propias paginadas
   POST /api/auth/logout   (token + sesión) cierra la sesión
 
 Auth: cabecera X-NEXO-Token == NEXO_INTERNAL_TOKEN del .env.
@@ -377,6 +381,30 @@ class Handler(BaseHTTPRequestHandler):
             else:
                 self._send(200, {"user": user})
             return
+        if path == "/api/auth/profile":
+            try:
+                user = self.server.auth.profile(self.headers.get("X-NEXO-Session") or "")
+            except AuthError as e:
+                self._auth_error(e)
+            except Exception as e:
+                log_internal("profile", e)
+                self._send(502, {"error": "No fue posible cargar el perfil. Inténtalo de nuevo."})
+            else:
+                self._send(200, {"user": user})
+            return
+        if path == "/api/auth/activity":
+            qs = parse_qs(parsed.query)
+            try:
+                act = self.server.auth.activity(self.headers.get("X-NEXO-Session") or "",
+                                                qs.get("limit", ["10"])[0], qs.get("offset", ["0"])[0])
+            except AuthError as e:
+                self._auth_error(e)
+            except Exception as e:
+                log_internal("activity", e)
+                self._send(502, {"error": "No fue posible cargar la actividad. Inténtalo de nuevo."})
+            else:
+                self._send(200, act)
+            return
         if path == "/api/agent/jobs":
             qs = parse_qs(parsed.query)
             try:
@@ -475,7 +503,8 @@ class Handler(BaseHTTPRequestHandler):
         parsed = urlparse(self.path)
         path = parsed.path
         if path not in ("/api/analyze", "/api/decisions",
-                        "/api/auth/register", "/api/auth/login", "/api/auth/logout") \
+                        "/api/auth/register", "/api/auth/login", "/api/auth/logout",
+                        "/api/auth/update_name", "/api/auth/change_password") \
                 and not path.startswith("/api/agent/jobs"):
             self._send(404, {"error": "Ruta no encontrada."})
             return
@@ -513,6 +542,30 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/api/auth/logout":
             self.server.auth.logout(self.headers.get("X-NEXO-Session") or "")
             self._send(200, {"ok": True})
+            return
+        if path == "/api/auth/update_name":
+            try:
+                user = self.server.auth.update_nombre(self.headers.get("X-NEXO-Session") or "",
+                                                      data.get("nombre", ""))
+            except AuthError as e:
+                self._auth_error(e)
+            except Exception as e:
+                log_internal("update_name", e)
+                self._send(502, {"error": "No fue posible guardar el nombre. Inténtalo de nuevo."})
+            else:
+                self._send(200, {"ok": True, "user": user})
+            return
+        if path == "/api/auth/change_password":
+            try:
+                self.server.auth.change_password(self.headers.get("X-NEXO-Session") or "",
+                                                 data.get("actual", ""), data.get("nueva", ""))
+            except AuthError as e:
+                self._auth_error(e)
+            except Exception as e:
+                log_internal("change_password", e)
+                self._send(502, {"error": "No fue posible cambiar la contraseña. Inténtalo de nuevo."})
+            else:
+                self._send(200, {"ok": True})
             return
         if path == "/api/agent/jobs":
             try:
@@ -669,7 +722,7 @@ def main():
                 print("AVISO: aplica sql/06_auth.sql para atribuir decisiones a usuarios.", flush=True)
     except Exception:  # noqa: BLE001
         auth_store, with_author = MemoryAuthStore(), False
-    srv.auth = AuthService(auth_store)
+    srv.auth = AuthService(auth_store, runs_provider=lambda: list(_mem_runs))
     srv.with_author = with_author and use_mysql
     srv.agent_manager = Manager(store, lambda: make_provider(AI_CFG), AI_CFG,
                                 {"fetch_tables": _fetch_tables, "metadata": lambda: METADATA,

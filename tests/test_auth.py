@@ -98,6 +98,58 @@ class TestServicio(unittest.TestCase):
         with self.assertRaises(AuthError):
             s.register("A", "mal", "x")
 
+    def test_perfil_y_cambio_nombre(self):
+        s = svc()
+        user, token = s.register("Ana Beltrán", "ana@example.com", "Segura123")
+        p = s.profile(token)
+        self.assertEqual(p["rol"], "operador")
+        self.assertTrue(p["creado_en"])
+        self.assertNotIn("pw_hash", p)
+        p2 = s.update_nombre(token, "Ana María Beltrán")
+        self.assertEqual(p2["nombre"], "Ana María Beltrán")
+        self.assertEqual(p2["rol"], "operador")
+        with self.assertRaises(AuthError):
+            s.update_nombre(token, "X")
+
+    def test_cambio_contrasena(self):
+        s = svc()
+        user, token = s.register("Ana", "ana@example.com", "Segura123")
+        with self.assertRaises(AuthError) as c:
+            s.change_password(token, "Mal12345", "Nueva1234")
+        self.assertEqual(c.exception.code, "credenciales_invalidas")
+        with self.assertRaises(AuthError):
+            s.change_password(token, "Segura123", "corta")
+        self.assertTrue(s.change_password(token, "Segura123", "Nueva1234"))
+        user2, _ = s.login("ana@example.com", "Nueva1234")
+        self.assertEqual(user2["id"], user["id"])
+        with self.assertRaises(AuthError):
+            s.login("ana@example.com", "Segura123")
+
+    def test_cuenta_desactivada_no_entra(self):
+        s = svc()
+        user, _ = s.register("Ana", "ana@example.com", "Segura123")
+        user["estado"] = "desactivada"
+        with self.assertRaises(AuthError) as c:
+            s.login("ana@example.com", "Segura123")
+        self.assertEqual(c.exception.code, "credenciales_invalidas")
+
+    def test_actividad_solo_propia(self):
+        s = svc()
+        a, ta = s.register("Ana", "ana@example.com", "Segura123")
+        b, tb = s.register("Beto", "beto@example.com", "Segura123")
+        s.runs_provider = lambda: [{"id": 7, "hallazgos": [
+            {"tabla": "clientes", "columna": "email", "regla": "email", "eventos": [
+                {"accion": "accept", "comentario": "ok", "creado_en": "2026-01-01",
+                 "por": {"id": a["id"], "nombre": "Ana"}},
+                {"accion": "discard", "comentario": "", "creado_en": "2026-01-02",
+                 "por": {"id": b["id"], "nombre": "Beto"}}]}]}]
+        act = s.activity(ta, limit=10, offset=0)
+        self.assertEqual(act["total"], 1)
+        self.assertEqual(act["items"][0]["run_id"], 7)
+        self.assertEqual(s.activity(ta, limit=1, offset=5)["items"], [])
+        actb = s.activity(tb, limit=10, offset=0)
+        self.assertEqual(actb["items"][0]["accion"], "discard")
+
 
 class TestDDL(unittest.TestCase):
     def test_migracion_06(self):
