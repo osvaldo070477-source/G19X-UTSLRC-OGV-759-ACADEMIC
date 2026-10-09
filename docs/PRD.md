@@ -48,6 +48,7 @@ Demostrar el recorrido completo de gobierno de datos (conocer → verificar → 
 | RF14 | Proveedor sin configurar | Sin clave hay proveedor de prueba etiquetado; nunca se presenta como IA real |
 | RF15 | Usuarios locales con validación | Registro/login con reglas en cliente y servidor, bloqueo por intentos, sesiones de 8 h; decisiones firmadas |
 | RF16 | Perfil propio | Ficha con rol y registro, cambio de nombre y contraseña persistidos, actividad propia paginada; todo identificado desde la sesión |
+| RF17 | Administración básica | Lista sin hashes, activar/desactivar (sin auto-bloqueo), desbloquear y restablecer claves; todo verificado en servidor; primer admin vía script local |
 
 ## 8. Requisitos no funcionales
 - RNF1: Modo A funciona con `file://`, sin Internet ni dependencias.

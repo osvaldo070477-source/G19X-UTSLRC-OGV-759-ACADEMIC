@@ -151,6 +151,58 @@ class TestServicio(unittest.TestCase):
         self.assertEqual(actb["items"][0]["accion"], "discard")
 
 
+class TestAdmin(unittest.TestCase):
+    def admin_svc(self):
+        s = svc()
+        a, ta = s.register("Admin Uno", "admin@example.com", "Admin1234")
+        s.store.get_user(a["id"])["rol"] = "admin"
+        u, tu = s.register("Usuaria Dos", "dos@example.com", "Usuaria1234")
+        return s, ta, tu, u["id"]
+
+    def test_no_admin_rechazado(self):
+        s, ta, tu, uid = self.admin_svc()
+        with self.assertRaises(AuthError) as c:
+            s.admin_list(tu)
+        self.assertEqual(c.exception.code, "no_autorizado")
+
+    def test_list_sin_hashes(self):
+        s, ta, tu, uid = self.admin_svc()
+        res = s.admin_list(ta)
+        self.assertEqual(res["total"], 2)
+        for it in res["items"]:
+            self.assertNotIn("pw_hash", it)
+            self.assertIn("rol", it)
+
+    def test_estado_y_autoproteccion(self):
+        s, ta, tu, uid = self.admin_svc()
+        self.assertTrue(s.admin_estado(ta, uid, "desactivada"))
+        with self.assertRaises(AuthError):
+            s.login("dos@example.com", "Usuaria1234")
+        with self.assertRaises(AuthError) as c:
+            s.admin_estado(ta, 1, "desactivada")
+        self.assertEqual(c.exception.code, "datos_invalidos")
+        with self.assertRaises(AuthError):
+            s.admin_estado(ta, uid, "raro")
+
+    def test_unlock_y_reset(self):
+        s, ta, tu, uid = self.admin_svc()
+        for _ in range(5):
+            try:
+                s.login("dos@example.com", "Mal12345")
+            except AuthError:
+                pass
+        self.assertTrue(s.admin_unlock(ta, uid))
+        u2, _ = s.login("dos@example.com", "Usuaria1234")
+        self.assertEqual(u2["id"], uid)
+        self.assertTrue(s.admin_reset(ta, uid, "Nueva1234"))
+        u3, _ = s.login("dos@example.com", "Nueva1234")
+        self.assertEqual(u3["id"], uid)
+        with self.assertRaises(AuthError):
+            s.admin_reset(ta, uid, "corta")
+        with self.assertRaises(AuthError):
+            s.admin_reset(tu, uid, "Otra1234")
+
+
 class TestDDL(unittest.TestCase):
     def test_migracion_06(self):
         with open(os.path.join(BASE, "sql", "06_auth.sql"), encoding="utf-8") as f:

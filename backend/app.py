@@ -31,6 +31,8 @@ Rutas (prefijo /api):
   POST /api/auth/update_name (token + sesión) {nombre}
   POST /api/auth/change_password (token + sesión) {actual, nueva}
   GET  /api/auth/activity (token + sesión) decisiones propias paginadas
+  GET  /api/admin/users  (token + sesión admin) lista sin hashes
+  POST /api/admin/users/<id>/estado|desbloquear|reset_password (admin)
   POST /api/auth/logout   (token + sesión) cierra la sesión
 
 Auth: cabecera X-NEXO-Token == NEXO_INTERNAL_TOKEN del .env.
@@ -405,6 +407,19 @@ class Handler(BaseHTTPRequestHandler):
             else:
                 self._send(200, act)
             return
+        if path == "/api/admin/users":
+            qs = parse_qs(parsed.query)
+            try:
+                res = self.server.auth.admin_list(self.headers.get("X-NEXO-Session") or "",
+                                                  qs.get("limit", ["20"])[0], qs.get("offset", ["0"])[0])
+            except AuthError as e:
+                self._auth_error(e)
+            except Exception as e:
+                log_internal("admin_list", e)
+                self._send(502, {"error": "No fue posible listar usuarios. Inténtalo de nuevo."})
+            else:
+                self._send(200, res)
+            return
         if path == "/api/agent/jobs":
             qs = parse_qs(parsed.query)
             try:
@@ -496,7 +511,7 @@ class Handler(BaseHTTPRequestHandler):
     def _auth_error(self, e):
         codes = {"datos_invalidos": 400, "email_en_uso": 400,
                  "credenciales_invalidas": 401, "sesion_invalida": 401,
-                 "cuenta_bloqueada": 423}
+                 "cuenta_bloqueada": 423, "no_autorizado": 403}
         self._send(codes.get(e.code, 400), {"error": str(e), "code": e.code})
 
     def do_POST(self):
@@ -505,7 +520,8 @@ class Handler(BaseHTTPRequestHandler):
         if path not in ("/api/analyze", "/api/decisions",
                         "/api/auth/register", "/api/auth/login", "/api/auth/logout",
                         "/api/auth/update_name", "/api/auth/change_password") \
-                and not path.startswith("/api/agent/jobs"):
+                and not path.startswith("/api/agent/jobs") \
+                and not path.startswith("/api/admin/users"):
             self._send(404, {"error": "Ruta no encontrada."})
             return
         if self._need_token():
@@ -542,6 +558,32 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/api/auth/logout":
             self.server.auth.logout(self.headers.get("X-NEXO-Session") or "")
             self._send(200, {"ok": True})
+            return
+        if path.startswith("/api/admin/users/"):
+            parts = path.rsplit("/", 2)
+            try:
+                target = int(parts[-2])
+            except ValueError:
+                self._send(400, {"error": "Usuario inválido."})
+                return
+            op, ses = parts[-1], self.headers.get("X-NEXO-Session") or ""
+            try:
+                if op == "estado":
+                    self.server.auth.admin_estado(ses, target, data.get("estado", ""))
+                elif op == "desbloquear":
+                    self.server.auth.admin_unlock(ses, target)
+                elif op == "reset_password":
+                    self.server.auth.admin_reset(ses, target, data.get("nueva", ""))
+                else:
+                    self._send(404, {"error": "Ruta no encontrada."})
+                    return
+            except AuthError as e:
+                self._auth_error(e)
+            except Exception as e:
+                log_internal("admin_user", e)
+                self._send(502, {"error": "No fue posible completar la acción. Inténtalo de nuevo."})
+            else:
+                self._send(200, {"ok": True})
             return
         if path == "/api/auth/update_name":
             try:

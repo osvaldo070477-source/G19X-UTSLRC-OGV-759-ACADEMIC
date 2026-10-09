@@ -109,6 +109,21 @@ class MemoryAuthStore:
     def update_user(self, user):
         self.users[user["email"].lower()] = user
 
+    def set_estado(self, uid, estado):
+        for u in self.users.values():
+            if u["id"] == uid:
+                u["estado"] = estado
+                return True
+        return False
+
+    def list_users(self, limit=20, offset=0):
+        users = sorted(self.users.values(), key=lambda u: u["id"])
+        items = [{"id": u["id"], "nombre": u["nombre"], "email": u["email"],
+                  "rol": u.get("rol") or "operador", "estado": u.get("estado") or "activo",
+                  "failed": u.get("failed", 0), "locked_until": u.get("locked_until", 0),
+                  "creado_en": str(u.get("creado_en") or "")} for u in users]
+        return {"items": items[offset:offset + limit], "total": len(items)}
+
     def set_nombre(self, uid, nombre):
         for u in self.users.values():
             if u["id"] == uid:
@@ -191,6 +206,31 @@ class MysqlAuthStore:
             cur.execute("UPDATE users SET failed_attempts=%s, locked_until=%s WHERE id=%s",
                         (user["failed"], user["locked_until"], user["id"]))
             conn.commit()
+        finally:
+            conn.close()
+
+    def set_estado(self, uid, estado):
+        conn = self._connect()
+        try:
+            cur = conn.cursor()
+            cur.execute("UPDATE users SET estado=%s WHERE id=%s", (estado, uid))
+            ok = cur.rowcount == 1
+            conn.commit()
+            return ok
+        finally:
+            conn.close()
+
+    def list_users(self, limit=20, offset=0):
+        conn = self._connect()
+        try:
+            cur = conn.cursor(dictionary=True)
+            cur.execute("SELECT COUNT(*) AS total FROM users")
+            total = cur.fetchone()["total"]
+            cur.execute(
+                "SELECT id, nombre, email, rol, estado, failed_attempts, locked_until, creado_en "
+                "FROM users ORDER BY id LIMIT %s OFFSET %s", (limit, offset))
+            items = [dict(r, creado_en=str(r.get("creado_en"))) for r in cur.fetchall()]
+            return {"items": items, "total": total}
         finally:
             conn.close()
 
@@ -369,6 +409,76 @@ class AuthService:
     def logout(self, token):
         if token:
             self.store.delete_session(token_hash(token))
+
+    def _admin(self, token):
+        """Devuelve el usuario solo si es admin; si no, error 403."""
+        uid = self.me(token)
+        user = self.store.get_user(uid)
+        if not user or user.get("rol") != "admin":
+            raise AuthError("no_autorizado", "Se requiere rol de administrador.")
+        return user
+
+    @staticmethod
+    def _page(limit, offset):
+        try:
+            limit = max(1, min(50, int(limit)))
+        except (TypeError, ValueError):
+            limit = 20
+        try:
+            offset = max(0, int(offset))
+        except (TypeError, ValueError):
+            offset = 0
+        return limit, offset
+
+    def admin_list(self, token, limit=20, offset=0):
+        self._admin(token)
+        limit, offset = self._page(limit, offset)
+        if hasattr(self.store, "list_users"):
+            return self.store.list_users(limit, offset)
+        return {"items": [], "total": 0}
+
+    def admin_estado(self, token, target_id, estado):
+        admin = self._admin(token)
+        if estado not in ("activo", "desactivada"):
+            raise AuthError("datos_invalidos", "Estado inválido: usa activo o desactivada.")
+        try:
+            target_id = int(target_id)
+        except (TypeError, ValueError):
+            raise AuthError("datos_invalidos", "Usuario inválido.")
+        if target_id == admin["id"]:
+            raise AuthError("datos_invalidos", "No puedes cambiar tu propia cuenta.")
+        if not self.store.set_estado(target_id, estado):
+            raise AuthError("datos_invalidos", "Usuario no encontrado.")
+        return True
+
+    def admin_unlock(self, token, target_id):
+        admin = self._admin(token)
+        try:
+            target_id = int(target_id)
+        except (TypeError, ValueError):
+            raise AuthError("datos_invalidos", "Usuario inválido.")
+        user = self.store.get_user(target_id)
+        if not user:
+            raise AuthError("datos_invalidos", "Usuario no encontrado.")
+        user["failed"] = 0
+        user["locked_until"] = 0
+        self.store.update_user(user)
+        return True
+
+    def admin_reset(self, token, target_id, nueva):
+        admin = self._admin(token)
+        try:
+            target_id = int(target_id)
+        except (TypeError, ValueError):
+            raise AuthError("datos_invalidos", "Usuario inválido.")
+        if target_id == admin["id"]:
+            raise AuthError("datos_invalidos", "Cambia tu propia clave desde Mi perfil.")
+        err = validate_password(nueva)
+        if err:
+            raise AuthError("datos_invalidos", err)
+        if not self.store.set_password(target_id, hash_password(nueva)):
+            raise AuthError("datos_invalidos", "Usuario no encontrado.")
+        return True
 
     def profile(self, token):
         user = self.store.get_user(self.me(token))

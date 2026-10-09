@@ -47,6 +47,7 @@
       <button data-tab="decisiones"><svg viewBox="0 0 20 20" aria-hidden="true"><rect x="3" y="3" width="14" height="14" rx="2" /><path d="M6.5 10.5l2.5 2.5 4.5-5.5" /></svg>Decisiones</button>
       <button data-tab="bitacora"><svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="7" /><path d="M10 6v4.5l3 2" /></svg>Bitácora</button>
       <button data-tab="agentes"><svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="5" cy="5" r="2" /><circle cx="15" cy="5" r="2" /><circle cx="10" cy="15" r="2" /><path d="M6.5 6.5L8.8 13M13.5 6.5L11.2 13M7 5h6" /></svg>Agentes</button>
+      <button data-tab="admin" id="navAdmin" hidden><svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="7" r="3" /><path d="M4 16.5c1-3.2 3.4-4.8 6-4.8s5 1.6 6 4.8" /><path d="M14.5 3.5l1 1 2-2.5" /></svg>Administración</button>
     </nav>
     <hr class="side-sep">
     <div class="side-foot">
@@ -267,6 +268,31 @@
           </label>
         </div>
         <div id="agJobsWrap" class="table-wrap"><p class="empty">Aún no hay trabajos.</p></div>
+      </section>
+
+      <!-- ADMINISTRACIÓN (solo rol admin) -->
+      <section id="tab-admin" class="tab" aria-label="Administración" hidden>
+        <p class="context-note">Gestión de cuentas: activar, desactivar, desbloquear y restablecer contraseñas. Sin hashes visibles.</p>
+        <div id="adminWrap" class="table-wrap"><p class="empty">Sin permiso o sin datos.</p></div>
+        <div class="panel" id="adminResetBox" hidden>
+          <h2>Restablecer contraseña</h2>
+          <p class="muted" id="adminResetWho"></p>
+          <form id="formAdminReset" novalidate>
+            <label for="adNew">Contraseña nueva
+              <span class="field-wrap">
+                <input id="adNew" type="password" autocomplete="new-password" maxlength="72" required>
+                <button type="button" class="pw-toggle" data-for="adNew" aria-pressed="false" aria-label="Mostrar contraseña">Mostrar</button>
+              </span>
+            </label>
+            <p class="muted small">Mínimo 8 caracteres, con mayúscula, minúscula y número.</p>
+            <p class="field-err" id="adNewErr" hidden></p>
+            <p class="state-line" id="adResetMsg" role="status"></p>
+            <div class="dec-actions">
+              <button type="submit" class="btn primary">Guardar nueva clave</button>
+              <button type="button" class="btn ghost" id="adResetCancel">Cancelar</button>
+            </div>
+          </form>
+        </div>
       </section>
 
       <!-- PERFIL -->

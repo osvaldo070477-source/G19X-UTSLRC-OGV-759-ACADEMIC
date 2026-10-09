@@ -145,7 +145,7 @@ function showVal(v){
 function $(id){ return document.getElementById(id); }
 
 /* ---------- Navegación por pestañas ---------- */
-var tabs = ["observatorio","catalogo","calidad","decisiones","bitacora","agentes","perfil"];
+var tabs = ["observatorio","catalogo","calidad","decisiones","bitacora","agentes","admin","perfil"];
 var SECTIONS = {
   observatorio: ["Observatorio", "Estado general de tus datos y último análisis."],
   catalogo: ["Catálogo", "Activos, responsables y estructura."],
@@ -153,6 +153,7 @@ var SECTIONS = {
   decisiones: ["Decisiones", "Responde las recomendaciones pendientes."],
   bitacora: ["Bitácora", "Historial de ejecuciones y exportaciones."],
   agentes: ["Agentes", "Trabajos de análisis con IA."],
+  admin: ["Administración", "Cuentas y accesos (solo admin)."],
   perfil: ["Mi perfil", "Tu cuenta y sesión."]
 };
 function entered(){ return $("welcome").hidden; }
@@ -181,6 +182,7 @@ function showTab(name){
   if(name==="decisiones") renderDecisions();
   if(name==="calidad") renderQuality();
   if(name==="agentes") renderAgents();
+  if(name==="admin") renderAdmin();
   if(name==="perfil") renderProfile();
 }
 document.querySelectorAll("[data-tab]").forEach(function(b){
@@ -862,6 +864,9 @@ function setUser(u){
   var name=u?u.nombre.split(" ")[0]:"Invitado";
   $("userLabel").textContent=name;
   if($("userInitials")) $("userInitials").textContent=u?initials(u.nombre):"?";
+  var admin=!!(u&&u.rol==="admin");
+  if($("navAdmin")) $("navAdmin").hidden=!admin;
+  if(!admin && !$("tab-admin").hidden) showTab("observatorio");
 }
 function initials(nombre){
   var p=String(nombre||"").trim().split(/\s+/);
@@ -1111,6 +1116,78 @@ $("formPass").addEventListener("submit", function(ev){
       else setErr($("pfNew"),"pfNewErr",msg);
     }
   }).catch(function(){ sub.disabled=false; setErr($("pfNew"),"pfNewErr","Sin conexión con el servicio."); });
+});
+/* ---------- Administración (solo admin) ---------- */
+var adminResetId=0;
+function renderAdmin(){
+  var w=$("adminWrap");
+  if(state.mode==="demo"||!state.user||state.user.rol!=="admin"){
+    w.innerHTML="<p class='empty'>Sección solo para administradores.</p>";
+    return;
+  }
+  apiGet("admin_users&limit=50&offset=0").then(function(res){
+    if(res.code!==200){ w.innerHTML="<p class='empty'>"+esc(res.body.error||"Sin permiso.")+"</p>"; return; }
+    var items=res.body.items||[];
+    if(!items.length){ w.innerHTML="<p class='empty'>Sin cuentas registradas.</p>"; return; }
+    w.innerHTML="<table><thead><tr><th>Cuenta</th><th>Rol</th><th>Estado</th><th></th></tr></thead><tbody>"+
+      items.map(function(x){
+        var locked=x.locked_until&&x.locked_until>Date.now()/1000;
+        return "<tr><td><strong>"+esc(x.nombre)+"</strong><br><span class='muted small'>"+esc(x.email)+"</span>"+
+          (locked?"<br><span class='badge media'>Bloqueada</span>":"")+"</td>"+
+        "<td>"+esc(x.rol)+"</td>"+
+        "<td><span class='badge estado'>"+esc(x.estado)+"</span></td>"+
+        "<td><div class='dec-actions'>"+
+        (x.estado==="activo"
+          ?"<button class='btn danger' data-est='desactivada' data-id='"+x.id+"'>Desactivar</button>"
+          :"<button class='btn primary' data-est='activo' data-id='"+x.id+"'>Activar</button>")+
+        "<button class='btn' data-unlock='"+x.id+"'>Desbloquear</button>"+
+        "<button class='btn ghost' data-rst='"+x.id+"' data-nm='"+esc(x.nombre)+"'>Nueva clave</button>"+
+        "</div></td></tr>";
+      }).join("")+"</tbody></table>";
+    w.querySelectorAll("[data-est]").forEach(function(b){
+      b.addEventListener("click", function(){
+        apiPost("admin_estado&id="+b.getAttribute("data-id"), {estado:b.getAttribute("data-est")}).then(function(res){
+          toast(res.code===200?"Estado actualizado.":(res.body.error||"No se pudo actualizar."));
+          if(res.code===200) renderAdmin();
+        }).catch(function(){ toast("Sin conexión."); });
+      });
+    });
+    w.querySelectorAll("[data-unlock]").forEach(function(b){
+      b.addEventListener("click", function(){
+        apiPost("admin_desbloquear&id="+b.getAttribute("data-unlock"), {}).then(function(res){
+          toast(res.code===200?"Cuenta desbloqueada.":(res.body.error||"No se pudo desbloquear."));
+          if(res.code===200) renderAdmin();
+        }).catch(function(){ toast("Sin conexión."); });
+      });
+    });
+    w.querySelectorAll("[data-rst]").forEach(function(b){
+      b.addEventListener("click", function(){
+        adminResetId=+b.getAttribute("data-rst");
+        $("adminResetWho").textContent="Nueva clave para "+b.getAttribute("data-nm")+".";
+        $("adNew").value=""; setErr($("adNew"),"adNewErr",""); $("adResetMsg").textContent="";
+        $("adminResetBox").hidden=false;
+        $("adNew").focus();
+      });
+    });
+  }).catch(function(){ w.innerHTML="<p class='empty'>Sin conexión con el servicio.</p>"; });
+}
+$("adResetCancel").addEventListener("click", function(){ $("adminResetBox").hidden=true; });
+$("formAdminReset").addEventListener("submit", function(ev){
+  ev.preventDefault();
+  var nw=$("adNew").value;
+  if(!setErr($("adNew"),"adNewErr",validPass(nw))) return;
+  $("adResetMsg").textContent="";
+  var sub=$("formAdminReset").querySelector("[type=submit]"); sub.disabled=true;
+  apiPost("admin_reset&id="+adminResetId, {nueva:nw}).then(function(res){
+    sub.disabled=false;
+    if(res.code===200&&res.body.ok){
+      $("formAdminReset").reset();
+      $("adminResetBox").hidden=true;
+      $("adResetMsg").textContent="";
+      toast("Contraseña restablecida.");
+      renderAdmin();
+    } else setErr($("adNew"),"adNewErr",res.body.error||"No se pudo guardar.");
+  }).catch(function(){ sub.disabled=false; setErr($("adNew"),"adNewErr","Sin conexión con el servicio."); });
 });
 $("btnProfLogin").addEventListener("click", function(){ openModal("modalLogin"); });
 $("btnProfRegister").addEventListener("click", function(){ openModal("modalRegister"); });

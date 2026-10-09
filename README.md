@@ -138,6 +138,10 @@ en MySQL), **Seguridad** (cambio de contraseña verificando la actual) y
   8 h guardadas en el servidor (PHP `$_SESSION`); el navegador solo recibe
   tu nombre y correo. Tus decisiones aceptadas quedan firmadas con tu nombre.
 - Toda escritura exige además el token CSRF de la sesión (`auth_csrf`).
+- **Administración** (rol `admin`): pestaña con lista de cuentas (sin hashes),
+  activar/desactivar (sin auto-bloquearse), desbloquear y restablecer claves.
+  El primer admin se asigna en la PC con
+  `.\.venv\Scripts\python.exe scripts/crea_admin.py correo` (cuenta ya registrada).
 - Sin MySQL todo es temporal (memoria); con MySQL aplica `sql/06_auth.sql`
   y `sql/07_permisos.sql` (obligatorio para que el acceso funcione).
 - Alcance local de un operador: no es autenticación empresarial.

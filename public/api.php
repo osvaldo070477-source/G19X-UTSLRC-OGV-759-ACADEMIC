@@ -60,7 +60,7 @@ $action = $_GET['action'] ?? '';
 $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 
 // Escrituras solo desde el mismo origen (el fetch de nuestra página).
-if (in_array($action, ['analyze', 'decisions', 'agent_start', 'agent_cancel', 'agent_review', 'agent_retry', 'auth_register', 'auth_login', 'auth_logout'], true)) {
+if (in_array($action, ['analyze', 'decisions', 'agent_start', 'agent_cancel', 'agent_review', 'agent_retry', 'auth_register', 'auth_login', 'auth_logout', 'auth_update_name', 'auth_change_password', 'admin_estado', 'admin_desbloquear', 'admin_reset'], true)) {
     $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
     $referer = $_SERVER['HTTP_REFERER'] ?? '';
     $host = $_SERVER['HTTP_HOST'] ?? '';
@@ -93,6 +93,10 @@ $routes = [
     'auth_activity' => ['GET', '/api/auth/activity' . '?limit=' . max(1, min(50, (int)($_GET['limit'] ?? 10))) . '&offset=' . max(0, (int)($_GET['offset'] ?? 0))],
     'auth_logout'   => ['POST', '/api/auth/logout'],
     'auth_csrf'     => ['GET', 'local'],
+    'admin_users'   => ['GET', '/api/admin/users' . '?limit=' . max(1, min(50, (int)($_GET['limit'] ?? 20))) . '&offset=' . max(0, (int)($_GET['offset'] ?? 0))],
+    'admin_estado'  => ['POST', '/api/admin/users/' . (int)($_GET['id'] ?? 0) . '/estado'],
+    'admin_desbloquear' => ['POST', '/api/admin/users/' . (int)($_GET['id'] ?? 0) . '/desbloquear'],
+    'admin_reset'   => ['POST', '/api/admin/users/' . (int)($_GET['id'] ?? 0) . '/reset_password'],
 ];
 if (!isset($routes[$action])) {
     nexo_out(404, ['error' => 'Acción desconocida.']);
@@ -180,6 +184,24 @@ if ($expectMethod === 'POST') {
             nexo_out(400, ['error' => 'La contraseña nueva es demasiado larga.']);
         }
         $data = ['actual' => $data['actual'], 'nueva' => $data['nueva']];
+    }
+    if ($action === 'admin_estado') {
+        if (!in_array($data['estado'] ?? '', ['activo', 'desactivada'], true)) {
+            nexo_out(400, ['error' => 'Estado inválido.']);
+        }
+        $data = ['estado' => $data['estado']];
+    }
+    if ($action === 'admin_reset') {
+        if (!isset($data['nueva']) || !is_string($data['nueva']) || $data['nueva'] === '') {
+            nexo_out(400, ['error' => 'Escribe la contraseña nueva.']);
+        }
+        if (strlen($data['nueva']) > 72) {
+            nexo_out(400, ['error' => 'La contraseña nueva es demasiado larga.']);
+        }
+        $data = ['nueva' => $data['nueva']];
+    }
+    if ($action === 'admin_desbloquear') {
+        $data = [];
     }
     if ($action === 'auth_logout') {
         $data = [];
