@@ -279,6 +279,7 @@ tbody tr:hover{background:rgba(255,255,255,.03)}
   width:min(440px,100%);display:grid;gap:var(--s3);align-content:start;
   box-shadow:0 24px 70px rgba(0,0,0,.45)}
 .welcome-access .btn{border-color:var(--navy);color:var(--navy)}
+.welcome-access .btn.link{border-color:transparent}
 .welcome-access .btn:hover{background:#eef4f9}
 .welcome-access .btn.primary{background:var(--teal-d);border-color:transparent;color:#fff}
 .welcome-access .btn.primary:hover{background:#0e8a7d}
