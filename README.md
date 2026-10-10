@@ -93,6 +93,11 @@ llevan 🤖 IA; las cifras verificadas llevan ✓.
   generar cargos; revisa su página de precios antes de activar. El proveedor
   de prueba y la demo no cuestan nada. No se hizo ninguna llamada de pago
   en este proyecto.
+- **Cuota gratuita (verificado oct-2026):** Gemini gratis permite ~20
+  peticiones/día por modelo (un trabajo agentic usa ~7-8); si se agota,
+  el trabajo registra `proveedor_server` con el tiempo de espera y puedes
+  reintentarlo al día siguiente. El modelo puede tardar ~1 min por turno:
+  `NEXO_AI_TIMEOUT_S` está en 180 por ese motivo.
 - **Alternativa local:** apunta `NEXO_AI_BASE_URL` a un servidor compatible
   en tu máquina (p. ej. un modelo local con API tipo OpenAI) y usa su modelo.
 

@@ -42,7 +42,7 @@ def ai_config_from_env(env=None):
         "model": get("NEXO_AI_MODEL", DEFAULT_MODEL).strip() or DEFAULT_MODEL,
         "base_url": get("NEXO_AI_BASE_URL", "https://api.openai.com/v1").rstrip("/"),
         "api_key": get("NEXO_AI_API_KEY", ""),
-        "timeout_s": int(get("NEXO_AI_TIMEOUT_S", "60") or 60),
+        "timeout_s": int(get("NEXO_AI_TIMEOUT_S", "180") or 180),
         "max_steps": int(get("NEXO_AI_MAX_STEPS", "10") or 10),
         "max_tool_calls": int(get("NEXO_AI_MAX_TOOL_CALLS", "20") or 20),
         "max_repairs": int(get("NEXO_AI_MAX_RETRIES", "2") or 2),
@@ -132,7 +132,9 @@ class StubProvider:
                 found = _re.search(r"Objetivo de esta etapa:\s*(\w+)", str(m["content"]))
                 if found:
                     stage = found.group(1)
-        turns = sum(1 for m in messages if m.get("role") == "assistant")
+        turns = sum(1 for m in messages
+                      if m.get("role") == "user"
+                      and str(m.get("content", "")).startswith("Resultado de tus llamadas"))
         nota = "Respuesta del proveedor de prueba (no es IA real)."
         if stage == "catalogo":
             if turns == 0:
@@ -192,28 +194,39 @@ class OpenAICompatProvider:
             raise
 
     def _post(self, body, timeout):
+        import time as _time
         req = urllib.request.Request(
             self.cfg["base_url"] + "/chat/completions",
             data=json.dumps(body).encode("utf-8"),
             headers={"Content-Type": "application/json",
                      "Authorization": "Bearer " + self.cfg["api_key"]},
             method="POST")
+        # Reintentos ante saturación o límite (429/503): la demanda suele ser temporal.
+        last = None
         try:
-            with urllib.request.urlopen(req, timeout=timeout) as res:
-                payload = json.loads(res.read().decode("utf-8"))
-        except urllib.error.HTTPError as e:
-            try:
-                detail = json.loads(e.read().decode("utf-8", "replace"))
-                msg = detail.get("error", {}).get("message", str(detail)) if isinstance(detail, dict) else str(detail)
-            except (ValueError, UnicodeDecodeError):
-                msg = f"HTTP {e.code}"
-            if e.code in (401, 403):
-                raise ProviderError("auth", f"Clave rechazada por el proveedor: {msg}")
-            if e.code == 400:
-                raise ProviderError("bad_request", f"Petición rechazada: {msg}")
-            if e.code == 429:
-                raise ProviderError("server", f"Límite del proveedor alcanzado: {msg}")
-            raise ProviderError("server", f"Error del proveedor (HTTP {e.code}): {msg}")
+            for attempt, wait in ((0, 0), (1, 15), (2, 45)):
+                if wait:
+                    _time.sleep(wait)
+                try:
+                    with urllib.request.urlopen(req, timeout=timeout) as res:
+                        payload = json.loads(res.read().decode("utf-8"))
+                    break
+                except urllib.error.HTTPError as e:
+                    try:
+                        detail = json.loads(e.read().decode("utf-8", "replace"))
+                        msg = detail.get("error", {}).get("message", str(detail)) if isinstance(detail, dict) else str(detail)
+                    except (ValueError, UnicodeDecodeError):
+                        msg = f"HTTP {e.code}"
+                    if e.code in (401, 403):
+                        raise ProviderError("auth", f"Clave rechazada por el proveedor: {msg}")
+                    if e.code == 400:
+                        raise ProviderError("bad_request", f"Petición rechazada: {msg}")
+                    if e.code in (429, 503) and attempt < 2:
+                        last = (e.code, msg)
+                        continue
+                    if e.code == 429:
+                        raise ProviderError("server", f"Límite del proveedor alcanzado: {msg}")
+                    raise ProviderError("server", f"Error del proveedor (HTTP {e.code}): {msg}")
         except TimeoutError:
             raise ProviderError("timeout", f"El proveedor no respondió en {timeout} s.")
         except OSError as e:

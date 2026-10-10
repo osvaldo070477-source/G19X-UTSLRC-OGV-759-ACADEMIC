@@ -110,18 +110,19 @@ def agent_loop(job, svc, stage, agent_id, system_extra, allowed_tools, final_des
         svc["add_usage"](resp.get("usage"))
         calls = resp.get("tool_calls") or []
         if calls:
-            history.append({"role": "assistant", "content": resp.get("content") or "",
-                            "tool_calls": [{"id": tc.get("id", ""), "type": "function",
-                                            "function": {"name": tc.get("name", ""), "arguments": json.dumps(
-                                                tc["arguments"] if isinstance(tc.get("arguments"), dict) else {})}}
-                                           for tc in calls if isinstance(tc, dict)]})
+            # Historial plano en texto: NO se reenvían tool_calls estructurados
+            # porque algunos proveedores (Gemini 3+) exigen thought_signature
+            # al repetir functionCall. El modelo sigue eligiendo herramientas
+            # con function calling nativo en cada turno.
+            notes = []
+            if resp.get("content"):
+                notes.append("Nota del modelo: " + str(resp.get("content"))[:500])
             for c in calls:
                 svc["throw_if_cancelled"]()
                 svc["check_deadline"]()
                 name = c.get("name", "")
                 if name not in allowed_tools:
-                    history.append({"role": "tool", "tool_call_id": c.get("id", ""),
-                                    "content": f"Rechazada: {name} no está permitida en esta etapa."})
+                    notes.append(f"Llamada a {name}: rechazada, no está permitida en esta etapa.")
                     svc["emit"]("herramienta", {"agente": agent_id, "herramienta": name,
                                                 "ok": False, "error": "no autorizada en etapa"})
                     bad += 1
@@ -130,8 +131,7 @@ def agent_loop(job, svc, stage, agent_id, system_extra, allowed_tools, final_des
                                       "El modelo insiste en herramientas no autorizadas.")
                     continue
                 if c.get("args_error") or not isinstance(c.get("arguments"), dict):
-                    history.append({"role": "tool", "tool_call_id": c.get("id", ""),
-                                    "content": "Argumentos inválidos: responde con JSON válido."})
+                    notes.append("Llamada rechazada: argumentos inválidos, responde con JSON válido.")
                     bad += 1
                     if bad > cfg["max_repairs"]:
                         raise JobHalt("fallido", "respuesta_invalida",
@@ -139,8 +139,7 @@ def agent_loop(job, svc, stage, agent_id, system_extra, allowed_tools, final_des
                     continue
                 args, err = validate_call(name, c["arguments"])
                 if err:
-                    history.append({"role": "tool", "tool_call_id": c.get("id", ""),
-                                    "content": "Rechazada: " + err})
+                    notes.append("Llamada a " + name + " rechazada: " + err)
                     svc["emit"]("herramienta", {"agente": agent_id, "herramienta": name,
                                                 "ok": False, "error": err})
                     continue
@@ -158,8 +157,12 @@ def agent_loop(job, svc, stage, agent_id, system_extra, allowed_tools, final_des
                 svc["emit"]("herramienta", {"agente": agent_id, "herramienta": name,
                                             "argumentos": args, "ok": "error" not in result,
                                             "resumen": json.dumps(result, ensure_ascii=False)[:500], "ms": ms})
-                history.append({"role": "tool", "tool_call_id": c.get("id", ""),
-                                "content": json.dumps(result, ensure_ascii=False)[:2000]})
+                notes.append(name + "(" + json.dumps(args, ensure_ascii=False) + ") -> " +
+                             json.dumps(result, ensure_ascii=False)[:1000])
+            history.append({"role": "user",
+                            "content": "Resultado de tus llamadas a herramientas:\n" +
+                                       "\n".join(notes) +
+                                       "\nSigue con la siguiente llamada o devuelve SOLO el JSON final."})
             continue
         data = _extract_json(resp.get("content"))
         if data is None:
