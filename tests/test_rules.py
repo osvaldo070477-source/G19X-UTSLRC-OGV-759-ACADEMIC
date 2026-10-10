@@ -19,16 +19,16 @@ def check(name, cond):
 
 
 t = get_sample_tables()
-check("muestra: 12 clientes", len(t["clientes"]) == 12)
-check("muestra: 8 pedidos", len(t["pedidos"]) == 8)
-check("muestra: 6 productos", len(t["productos"]) == 6)
+check("muestra: 20 clientes", len(t["clientes"]) == 20)
+check("muestra: 14 pedidos", len(t["pedidos"]) == 14)
+check("muestra: 10 productos", len(t["productos"]) == 10)
 
 r = analyze_tables(t)
-check("26 registros", r["total_registros"] == 26)
-check("123 comprobaciones", r["comprobaciones"] == 123)
-check("8 incidencias", r["incidencias"] == 8)
-check("6 hallazgos", len(r["hallazgos"]) == 6)
-check("índice 93", r["indice"] == 93)
+check("44 registros", r["total_registros"] == 44)
+check("208 comprobaciones", r["comprobaciones"] == 208)
+check("21 incidencias", r["incidencias"] == 21)
+check("8 hallazgos", len(r["hallazgos"]) == 8)
+check("índice 90", r["indice"] == 90)
 
 # Reglas individuales
 check("cero no es vacío", is_empty(0) is False and is_empty(0.0) is False)

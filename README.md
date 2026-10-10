@@ -9,7 +9,7 @@ catálogo → análisis → evidencias → recomendaciones → decisiones → bi
 Abre con doble clic **`public/index.html`** en tu navegador.
 
 - Verás **«Modo demostración — datos de ejemplo»**.
-- Pulsa **Ejecutar análisis**: obtendrás 123 comprobaciones, 8 incidencias, 6 hallazgos e índice **93%** (calculados, no escritos a mano).
+- Pulsa **Ejecutar análisis**: obtendrás 208 comprobaciones, 21 incidencias, 8 hallazgos e índice **90%** (calculados, no escritos a mano).
 - Todo funciona sin Internet, sin PHP, sin Python y sin MySQL.
 - Lo que decidas se guarda en el navegador (`localStorage`); si no está disponible, se avisa que durará solo la sesión.
 - *Live Server de VS Code no ejecuta PHP: sirve la misma demostración.*
@@ -173,13 +173,13 @@ Ejecutado aquí (2026-09-21): `tests/test_rules.py` (15/15 OK),
 `tests/test_agents.py` (20/20 OK, todo con proveedor de prueba),
 `tests/test_auth.py` (14/14 OK), `scripts/check.py` (OK), `scripts/check_ui.py` (OK), flujo agentic vivo PHP→Python con stub
 (inicio, revisión, aprobación, cancelación, reintento, rechazos 409;
-trabajo #1 completado con 123/8/93 y 6 recomendaciones).
+trabajo #1 completado con 208/21/90 y 8 recomendaciones).
 **Cero llamadas a IA real: no hay clave configurada.**
 Flujo de usuarios vivo: registro, duplicado (400), login erróneo (401),
 bloqueo tras 5 fallos (423), sesión que sobrevive, decisión firmada con el
 nombre, invitado sin firma y logout (401 posterior).
-MySQL 8.0 local verificado (2026-09-21): usuarios limitados, semilla 12/8/6,
-análisis real 123/8/93, decisión que sobrevive al reinicio del servicio.
+MySQL 8.0 local verificado: usuarios limitados, semilla 20/14/10,
+análisis real 208/21/90, decisión que sobrevive al reinicio del servicio.
 Ojo: el servicio Python debe iniciarse con `.\.venv\Scripts\python.exe`
 (donde está `mysql-connector-python`), y se corrigió la fecha del detalle.
 Perfil verificado vivo (2026-10-08): registro→perfil→cambio de nombre→cambio

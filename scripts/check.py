@@ -33,8 +33,8 @@ print("  MySQL: pendiente (no requerido para la demostración)")
 
 print("== Muestra y reglas ==")
 r = analyze_tables(get_sample_tables())
-esperado = {"comprobaciones": 123, "incidencias": 8, "indice": 93,
-            "total_registros": 26, "hallazgos": 6}
+esperado = {"comprobaciones": 208, "incidencias": 21, "indice": 90,
+            "total_registros": 44, "hallazgos": 8}
 for k, v in esperado.items():
     real = r[k] if k != "hallazgos" else len(r["hallazgos"])
     marca = "OK " if real == v else "FALLO"
@@ -44,7 +44,7 @@ for k, v in esperado.items():
 
 print("== Equivalencia JS ==")
 print("  La equivalencia con public/app.js se verifica abriendo la demo,")
-print("  ejecutando el análisis y comparando 123/8/6/93 (ver README).")
+print("  ejecutando el análisis y comparando 208/21/8/90 (ver README).")
 
 print("== Herramientas agentic ==")
 names = [t["name"] for t in TOOL_DEFS]

@@ -20,7 +20,7 @@ Demostrar el recorrido completo de gobierno de datos (conocer → verificar → 
 ## 5. Alcance
 - Tres modos base: A (demostración sin instalaciones), B (PHP + Python sin MySQL), C (PHP + Python + MySQL).
 - **Capacidad agentic (este incremento):** trabajos en segundo plano donde un modelo decide qué herramientas autorizadas ejecutar; puntuación siempre del motor; revisión humana entre pasos.
-- 3 activos, 26 registros sintéticos, 123 comprobaciones, índice 93 (calculado, nunca escrito a mano).
+- 3 activos, 44 registros sintéticos, 208 comprobaciones, índice 90 (calculado, nunca escrito a mano).
 - Decisiones sobre la ejecución más reciente; lectura de anteriores.
 
 ## 6. Exclusiones (lo que NEXO NO hace)
@@ -33,7 +33,7 @@ Demostrar el recorrido completo de gobierno de datos (conocer → verificar → 
 | ID | Requisito | Aceptación |
 |----|-----------|------------|
 | RF1 | Observatorio con modo, activos, registros, índice, hallazgos, pendientes y último análisis | Sin análisis previo no muestra resultados inventados |
-| RF2 | Botón Ejecutar análisis | Calcula 123/8/6/93 sobre la muestra |
+| RF2 | Botón Ejecutar análisis | Calcula 208/21/8/90 sobre la muestra |
 | RF3 | Catálogo con búsqueda y filtros | Filtra por texto, dominio y activo; muestra datos sintéticos |
 | RF4 | Calidad con filtros por tabla, prioridad y tipo | Cada hallazgo abre evidencia con valor y ref de fila |
 | RF5 | Decisiones aceptar/descartar/reabrir + comentario ≤1000 | Genera eventos acumulativos; aceptar no altera fuente ni índice |
@@ -58,7 +58,7 @@ Demostrar el recorrido completo de gobierno de datos (conocer → verificar → 
 - RNF5: Pocas dependencias (cero en A/B; solo `mysql-connector-python` en C).
 
 ## 9. Historias de usuario (resumen)
-- HU1 «Como operador quiero ejecutar el análisis y ver el índice» → 93% con 8 incidencias en 6 hallazgos.
+- HU1 «Como operador quiero ejecutar el análisis y ver el índice» → 90% con 21 incidencias en 8 hallazgos.
 - HU2 «…ver quién es responsable de cada dato» → responsable y dominio visibles por activo.
 - HU3 «…ver la evidencia de cada problema» → valores y refs `tabla:row_id`.
 - HU4 «…registrar mi decisión con comentario» → evento acumulativo, ≤1000 caracteres.
@@ -68,7 +68,7 @@ Demostrar el recorrido completo de gobierno de datos (conocer → verificar → 
 Navegador → PHP (`public/api.php`) → servicio Python (`backend/app.py`) → MySQL (`nexo_source`, `nexo_app`). PHP nunca toca MySQL directamente. Detalle en `docs/arquitectura.md`.
 
 ## 11. Métricas de calidad
-`índice = redondear((comprobaciones − incidencias) / comprobaciones × 100)`; sin comprobaciones → «Sin evaluar». Muestra de referencia: 123 comprobaciones, 8 incidencias, 6 hallazgos, 93%.
+`índice = redondear((comprobaciones − incidencias) / comprobaciones × 100)`; sin comprobaciones → «Sin evaluar». Muestra de referencia: 208 comprobaciones, 21 incidencias, 8 hallazgos, 90%.
 
 ## 12. Modos de ejecución
 - **A:** `public/index.html` directo; reglas en JS; `localStorage` (o solo sesión). Sin agentes reales.

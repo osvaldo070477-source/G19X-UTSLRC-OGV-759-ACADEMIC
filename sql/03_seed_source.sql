@@ -13,7 +13,15 @@ INSERT INTO clientes (row_id,id,nombre,email) VALUES
  ('cli-09','CLI-009','Valeria Castro','valeria.castro@example.com'),
  ('cli-10','CLI-010','Pedro Sánchez','pedro.sanchez@example.com'),
  ('cli-11','CLI-011','Carmen Díaz','carmen.diaz@example.com'),
- ('cli-12','CLI-012','Raúl Ortega','raul.ortega@example.com')
+ ('cli-12','CLI-012','Raúl Ortega','raul.ortega@example.com'),
+ ('cli-13','CLI-013','Elena Ruiz','elena.ruiz@example.com'),
+ ('cli-14','CLI-014','Jorge López','jorge.lopez@example'),
+ ('cli-15','CLI-015','','sin.nombre@example.com'),
+ ('cli-16','CLI-009','Valeria Castro (duplicada)','valeria2@example.com'),
+ ('cli-17','CLI-017','   ','espacios@example.com'),
+ ('cli-18','CLI-018','Marta Gil',''),
+ ('cli-19','CLI-019','Iván Paz','ivan.paz@example.com'),
+ ('cli-20','CLI-020','Sara Rey','sara.rey@example')
 ON DUPLICATE KEY UPDATE id=VALUES(id), nombre=VALUES(nombre), email=VALUES(email);
 
 INSERT INTO pedidos (row_id,id,cliente_id,fecha,total) VALUES
@@ -24,7 +32,13 @@ INSERT INTO pedidos (row_id,id,cliente_id,fecha,total) VALUES
  ('ped-05','PED-005','CLI-007','2026-01-20',45.00),
  ('ped-06','PED-006','CLI-009','2026-02-01',320.75),
  ('ped-07','PED-007','CLI-010','2026-02-03',15.00),
- ('ped-08','PED-008','CLI-012','2026-02-05',99.99)
+ ('ped-08','PED-008','CLI-012','2026-02-05',99.99),
+ ('ped-09','PED-009','CLI-013','2026-02-10',75.00),
+ ('ped-10','PED-010','','2026-02-11',120.00),
+ ('ped-11','PED-005','CLI-015','2026-02-12',33.30),
+ ('ped-12','PED-012','CLI-018','2026-02-13',0),
+ ('ped-13','PED-013','CLI-019','2026-02-14',210.50),
+ ('ped-14','PED-014','CLI-020','2026-02-15',18.75)
 ON DUPLICATE KEY UPDATE id=VALUES(id), cliente_id=VALUES(cliente_id), fecha=VALUES(fecha), total=VALUES(total);
 
 INSERT INTO productos (row_id,id,nombre,precio) VALUES
@@ -33,5 +47,9 @@ INSERT INTO productos (row_id,id,nombre,precio) VALUES
  ('pro-03','PRO-003','Taza Cerámica',45.00),
  ('pro-04','PRO-004','Filtro Papel x40',30.00),
  ('pro-05','PRO-005','Cafetera Prensa 1L',450.00),
- ('pro-06','PRO-006','Termo Acero 750ml',0)
+ ('pro-06','PRO-006','Termo Acero 750ml',0),
+ ('pro-07','PRO-007','Cafetera Goteo 12T',320.00),
+ ('pro-08','PRO-008','',55.00),
+ ('pro-09','PRO-009','Molino Manual',0),
+ ('pro-10','PRO-003','Taza Cerámica (duplicada)',45.00)
 ON DUPLICATE KEY UPDATE id=VALUES(id), nombre=VALUES(nombre), precio=VALUES(precio);

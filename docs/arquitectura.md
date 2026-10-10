@@ -16,7 +16,7 @@
 - **`sql/`:** `nexo_source` (datos) y `nexo_app` (resultados). Dos bases y dos cuentas separan
   «mirar la fuente» (solo lectura) de «registrar resultados» (permisos limitados).
 - **`scripts/`:** `gen_env.py` crea `.env` con secretos aleatorios; `check.py` verifica requisitos y totales.
-- **`tests/test_rules.py`:** comprueba 123/8/6/93 y cada regla con la biblioteca estándar.
+- **`tests/test_rules.py`:** comprueba 208/21/8/90 y cada regla con la biblioteca estándar.
 
 ## Cómo se comunican
 1. El navegador pide `api.php?action=analyze`.
