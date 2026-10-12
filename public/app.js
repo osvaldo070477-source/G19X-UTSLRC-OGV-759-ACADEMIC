@@ -767,6 +767,23 @@ function stageState(job, key){
   if(evs.length) return "active";
   return "idle";
 }
+function resumenError(job){
+  var code=job.codigo_error||"", msg=String(job.error||"");
+  var espera="";
+  var hm=msg.match(/(\d+)h(\d+)m/);
+  if(hm) espera=" (reintenta en ~"+hm[1]+" h "+hm[2]+" min)";
+  else { var rs=msg.match(/retryDelay"?\s*:\s*"(\d+)s/); if(rs) espera=" (reintenta en ~"+Math.round(+rs[1]/3600)+" h)"; }
+  if(code==="proveedor_server"&&/cuota|quota|429/i.test(msg)) return "Cuota del proveedor agotada"+espera+".";
+  if(code==="proveedor_server") return "El proveedor falló temporalmente. Reintenta más tarde.";
+  if(code==="proveedor_timeout") return "El proveedor tardó demasiado. Reintenta más tarde.";
+  if(code==="proveedor_bad_request") return "Petición rechazada por el proveedor.";
+  if(code==="proveedor_auth") return "Clave del proveedor rechazada.";
+  if(code==="limite_pasos") return "El modelo no concluyó en los pasos permitidos.";
+  if(code==="respuesta_invalida") return "El modelo devolvió un formato inválido.";
+  if(code==="tiempo_agotado") return "Se agotó el tiempo máximo del trabajo.";
+  if(code==="cancelado") return "Cancelado por el operador.";
+  return msg.slice(0,160);
+}
 function paintAgentJob(){
   var job=agState.job;
   if(!job) return;
@@ -775,7 +792,8 @@ function paintAgentJob(){
     var s=stageState(job,st[0]);
     var word=s==="done"?"Completada":s==="active"?"En curso":"Pendiente";
     return "<li class='"+s+"'><strong>"+st[1]+"</strong><span class='stage-state'>"+word+"</span></li>";
-  }).join("")+(job.error?"<li><strong>Error ("+esc(job.codigo_error||"")+ "):</strong> "+esc(job.error)+"</li>":"");
+  }).join("")+(job.error?"<li><strong>Error ("+esc(job.codigo_error||"")+ "):</strong> "+esc(resumenError(job))+
+    "<details><summary>Detalle técnico</summary><p class='small'>"+esc(job.error)+"</p></details></li>":"");
   var can=job.estado==="en_ejecucion"||job.estado==="esperando_revision";
   $("btnAgentCancel").disabled=!can;
   // Revisiones pendientes
@@ -903,7 +921,7 @@ function paintStrength(){
 function setUser(u){
   state.user=u||null;
   var name=u?u.nombre.split(" ")[0]:"Invitado";
-  $("userLabel").textContent=name;
+  $("userLabel").textContent=name+(u&&u.rol==="lector"?" (lectura)":"");
   if($("userInitials")) $("userInitials").textContent=u?initials(u.nombre):"?";
   var admin=!!(u&&u.rol==="admin");
   if($("navAdmin")) $("navAdmin").hidden=!admin;
@@ -1195,7 +1213,11 @@ function renderAdmin(){
         var locked=x.locked_until&&x.locked_until>Date.now()/1000;
         return "<tr><td><strong>"+esc(x.nombre)+"</strong><br><span class='muted small'>"+esc(x.email)+"</span>"+
           (locked?"<br><span class='badge media'>Bloqueada</span>":"")+"</td>"+
-        "<td>"+esc(x.rol)+"</td>"+
+        "<td>"+esc(x.rol)+"<br><label class='muted small'>Cambiar a "+
+        "<select data-rol='"+x.id+"'>"+
+        ["operador","lector","admin"].map(function(r){
+          return "<option value='"+r+"'"+(r===x.rol?" selected":"")+">"+r+"</option>";
+        }).join("")+"</select></label></td>"+
         "<td><span class='badge estado'>"+esc(x.estado)+"</span></td>"+
         "<td><div class='dec-actions'>"+
         (x.estado==="activo"
@@ -1217,6 +1239,14 @@ function renderAdmin(){
       b.addEventListener("click", function(){
         apiPost("admin_desbloquear&id="+b.getAttribute("data-unlock"), {}).then(function(res){
           toast(res.code===200?"Cuenta desbloqueada.":(res.body.error||"No se pudo desbloquear."));
+          if(res.code===200) renderAdmin();
+        }).catch(function(){ toast("Sin conexión."); });
+      });
+    });
+    w.querySelectorAll("[data-rol]").forEach(function(s){
+      s.addEventListener("change", function(){
+        apiPost("admin_rol&id="+s.getAttribute("data-rol"), {rol:s.value}).then(function(res){
+          toast(res.code===200?"Rol actualizado.":(res.body.error||"No se pudo cambiar el rol."));
           if(res.code===200) renderAdmin();
         }).catch(function(){ toast("Sin conexión."); });
       });

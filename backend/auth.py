@@ -239,6 +239,17 @@ class MysqlAuthStore:
         finally:
             conn.close()
 
+    def set_rol(self, uid, rol):
+        conn = self._connect()
+        try:
+            cur = conn.cursor()
+            cur.execute("UPDATE users SET rol=%s WHERE id=%s", (rol, uid))
+            ok = cur.rowcount == 1
+            conn.commit()
+            return ok
+        finally:
+            conn.close()
+
     def list_users(self, limit=20, offset=0):
         conn = self._connect()
         try:
@@ -522,6 +533,27 @@ class AuthService:
             raise AuthError("datos_invalidos", err)
         if not self.store.set_password(target_id, hash_password(nueva)):
             raise AuthError("datos_invalidos", "Usuario no encontrado.")
+        return True
+
+    def admin_rol(self, token, target_id, rol):
+        admin = self._admin(token)
+        if rol not in ("operador", "lector", "admin"):
+            raise AuthError("datos_invalidos", "Rol inválido.")
+        try:
+            target_id = int(target_id)
+        except (TypeError, ValueError):
+            raise AuthError("datos_invalidos", "Usuario inválido.")
+        if target_id == admin["id"]:
+            raise AuthError("datos_invalidos", "No puedes cambiar tu propio rol.")
+        user = self.store.get_user(target_id)
+        if not user:
+            raise AuthError("datos_invalidos", "Usuario no encontrado.")
+        user["rol"] = rol
+        if hasattr(self.store, "set_rol"):
+            if not self.store.set_rol(target_id, rol):
+                raise AuthError("datos_invalidos", "Usuario no encontrado.")
+        else:
+            self.store.update_user(user)
         return True
 
     def profile(self, token):

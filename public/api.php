@@ -60,7 +60,7 @@ $action = $_GET['action'] ?? '';
 $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 
 // Escrituras solo desde el mismo origen (el fetch de nuestra página).
-if (in_array($action, ['analyze', 'decisions', 'agent_start', 'agent_cancel', 'agent_review', 'agent_retry', 'auth_register', 'auth_login', 'auth_logout', 'auth_update_name', 'auth_change_password', 'auth_recover', 'admin_estado', 'admin_desbloquear', 'admin_reset', 'source_add', 'source_preview', 'source_import', 'source_meta'], true)) {
+if (in_array($action, ['analyze', 'decisions', 'agent_start', 'agent_cancel', 'agent_review', 'agent_retry', 'auth_register', 'auth_login', 'auth_logout', 'auth_update_name', 'auth_change_password', 'auth_recover', 'admin_estado', 'admin_desbloquear', 'admin_reset', 'admin_rol', 'source_add', 'source_preview', 'source_import', 'source_meta'], true)) {
     $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
     $referer = $_SERVER['HTTP_REFERER'] ?? '';
     $host = $_SERVER['HTTP_HOST'] ?? '';
@@ -103,6 +103,7 @@ $routes = [
     'admin_estado'  => ['POST', '/api/admin/users/' . (int)($_GET['id'] ?? 0) . '/estado'],
     'admin_desbloquear' => ['POST', '/api/admin/users/' . (int)($_GET['id'] ?? 0) . '/desbloquear'],
     'admin_reset'   => ['POST', '/api/admin/users/' . (int)($_GET['id'] ?? 0) . '/reset_password'],
+    'admin_rol'     => ['POST', '/api/admin/users/' . (int)($_GET['id'] ?? 0) . '/rol'],
 ];
 if (!isset($routes[$action])) {
     nexo_out(404, ['error' => 'Acción desconocida.']);
@@ -219,6 +220,12 @@ if ($expectMethod === 'POST') {
     }
     if ($action === 'admin_desbloquear') {
         $data = [];
+    }
+    if ($action === 'admin_rol') {
+        if (!in_array($data['rol'] ?? '', ['operador', 'lector', 'admin'], true)) {
+            nexo_out(400, ['error' => 'Rol inválido.']);
+        }
+        $data = ['rol' => $data['rol']];
     }
     if (in_array($action, ['source_add', 'source_preview', 'source_import', 'source_meta'], true)) {
         if (!isset($data['tabla']) || !in_array($data['tabla'], ['clientes', 'pedidos', 'productos'], true)) {

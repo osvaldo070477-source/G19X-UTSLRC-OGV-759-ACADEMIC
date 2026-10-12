@@ -32,7 +32,7 @@ Rutas (prefijo /api):
   POST /api/auth/change_password (token + sesión) {actual, nueva}
   GET  /api/auth/activity (token + sesión) decisiones propias paginadas
   GET  /api/admin/users  (token + sesión admin) lista sin hashes
-  POST /api/admin/users/<id>/estado|desbloquear|reset_password (admin)
+  POST /api/admin/users/<id>/estado|desbloquear|reset_password|rol (admin)
   POST /api/auth/recover     (token) {email, codigo, nueva}
   POST /api/source/add       (token + sesión) {tabla, fila} requiere MySQL
   POST /api/source/preview   (token + sesión) {tabla, filas|csv} solo valida
@@ -531,6 +531,14 @@ class Handler(BaseHTTPRequestHandler):
             self._auth_error(e)
             return None
 
+    def _is_lector(self):
+        try:
+            uid = self.server.auth.me(self.headers.get("X-NEXO-Session") or "")
+            user = self.server.auth.store.get_user(uid)
+            return bool(user) and user.get("rol") == "lector"
+        except AuthError:
+            return False
+
     def _session_user(self):
         """Devuelve el perfil público o None (invitado). Nunca falla."""
         try:
@@ -560,6 +568,15 @@ class Handler(BaseHTTPRequestHandler):
             return
         if self._need_token():
             self._send(401, {"error": "Token interno inválido o ausente."})
+            return
+        if path != "/api/auth/logout" and self._is_lector() and (
+                path in ("/api/analyze", "/api/decisions",
+                         "/api/auth/update_name", "/api/auth/change_password",
+                         "/api/source/add", "/api/source/preview", "/api/source/import",
+                         "/api/source/meta")
+                or path.startswith("/api/agent/jobs")
+                or path.startswith("/api/admin/users")):
+            self._send(403, {"error": "Rol lector: solo lectura.", "code": "no_autorizado"})
             return
         data = self._body()
         if data is None:
@@ -622,6 +639,8 @@ class Handler(BaseHTTPRequestHandler):
                     self.server.auth.admin_unlock(ses, target)
                 elif op == "reset_password":
                     self.server.auth.admin_reset(ses, target, data.get("nueva", ""))
+                elif op == "rol":
+                    self.server.auth.admin_rol(ses, target, data.get("rol", ""))
                 else:
                     self._send(404, {"error": "Ruta no encontrada."})
                     return

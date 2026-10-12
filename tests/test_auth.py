@@ -216,6 +216,19 @@ class TestAdmin(unittest.TestCase):
         with self.assertRaises(AuthError):
             s.admin_reset(tu, uid, "Otra1234")
 
+    def test_cambio_rol(self):
+        s, ta, tu, uid = self.admin_svc()
+        self.assertTrue(s.admin_rol(ta, uid, "lector"))
+        self.assertEqual(s.store.get_user(uid)["rol"], "lector")
+        with self.assertRaises(AuthError):
+            s.admin_rol(ta, uid, "super")
+        with self.assertRaises(AuthError) as c:
+            s.admin_rol(ta, 1, "lector")
+        self.assertEqual(c.exception.code, "datos_invalidos")
+        with self.assertRaises(AuthError) as c2:
+            s.admin_rol(tu, uid, "admin")
+        self.assertEqual(c2.exception.code, "no_autorizado")
+
 
 class TestDDL(unittest.TestCase):
     def test_migracion_06(self):
