@@ -94,10 +94,13 @@ llevan 🤖 IA; las cifras verificadas llevan ✓.
   de prueba y la demo no cuestan nada. No se hizo ninguna llamada de pago
   en este proyecto.
 - **Cuota gratuita (verificado oct-2026):** Gemini gratis permite ~20
-  peticiones/día por modelo (un trabajo agentic usa ~7-8); si se agota,
+  peticiones/día por modelo (un trabajo agentic usa ~7-10); si se agota,
   el trabajo registra `proveedor_server` con el tiempo de espera y puedes
-  reintentarlo al día siguiente. El modelo puede tardar ~1 min por turno:
-  `NEXO_AI_TIMEOUT_S` está en 180 por ese motivo.
+  reintentarlo al día siguiente. Modelos probados: `gemini-3.5-flash`
+  (rápido, ~2 s/turno; la API puede resolverlo a la familia 3.6) y
+  `gemini-3.8-flash` (lento, ~1 min/turno). `gemini-2.5-flash` y
+  `gemini-2.5-flash-lite` están retirados (404): no los uses.
+  `NEXO_AI_TIMEOUT_S` está en 180 por los turnos lentos.
 - **Alternativa local:** apunta `NEXO_AI_BASE_URL` a un servidor compatible
   en tu máquina (p. ej. un modelo local con API tipo OpenAI) y usa su modelo.
 

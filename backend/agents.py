@@ -95,7 +95,7 @@ def agent_loop(job, svc, stage, agent_id, system_extra, allowed_tools, final_des
                 ". Herramientas permitidas: " + ", ".join(allowed_tools) +
                 ". " + final_desc}]
     tools_spec = [t for t in openai_tools() if t["function"]["name"] in allowed_tools]
-    seen, repairs, bad = [], 0, 0
+    seen, repairs, bad, warned = [], 0, 0, False
     while True:
         svc["throw_if_cancelled"]()
         svc["check_deadline"]()
@@ -103,6 +103,11 @@ def agent_loop(job, svc, stage, agent_id, system_extra, allowed_tools, final_des
             raise JobHalt("fallido", "limite_llamadas", "Se alcanzó el máximo de llamadas a herramientas.")
         if len(seen) >= max_calls:
             raise JobHalt("fallido", "limite_pasos", "La etapa agotó sus pasos sin finalizar.")
+        if not warned and len(seen) >= max_calls - 2:
+            history.append({"role": "user",
+                            "content": "Aviso: te quedan %d pasos en esta etapa. "
+                                       "Devuelve SOLO el JSON final pedido, sin más llamadas." % (max_calls - len(seen))})
+            warned = True
         try:
             resp = provider.chat(history, tools=tools_spec, tool_choice="auto")
         except ProviderError as e:
