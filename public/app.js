@@ -197,6 +197,7 @@ function showTab(name){
   closeNav();
   try{ if(entered()) sessionStorage.setItem("nexo_tab",name); }catch(e){}
   if(name==="bitacora") renderRuns();
+  if(name==="observatorio") renderObservatory();
   if(name==="decisiones") renderDecisions();
   if(name==="calidad") renderQuality();
   if(name==="agentes") renderAgents();
