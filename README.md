@@ -150,6 +150,8 @@ en MySQL), **Seguridad** (cambio de contraseña verificando la actual) y
   activar/desactivar (sin auto-bloquearse), desbloquear, restablecer claves y
   cambiar roles (`operador`, `lector`, `admin`). El rol **lector** solo puede
   consultar: el servidor rechaza sus escrituras (403).
+  Cada acción admin queda registrada (quién, qué, cuándo) y visible en la
+  propia pestaña.
   El primer admin se asigna en la PC con
   `.\.venv\Scripts\python.exe scripts/crea_admin.py correo` (cuenta ya registrada).
 - Sin MySQL todo es temporal (memoria); con MySQL aplica `sql/06_auth.sql`

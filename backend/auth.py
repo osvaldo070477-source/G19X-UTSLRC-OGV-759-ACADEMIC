@@ -87,6 +87,7 @@ class MemoryAuthStore:
 
     def __init__(self):
         self.users, self.sessions, self.seq = {}, {}, [0]
+        self.audit = []
 
     def find_user(self, email):
         return self.users.get(email.lower())
@@ -112,6 +113,16 @@ class MemoryAuthStore:
                 u["recovery_hash"] = thash
                 return True
         return False
+
+    def append_audit(self, admin_id, accion, target_id=None, detalle=""):
+        import datetime as _dt
+        self.audit.append({"id": len(self.audit) + 1, "admin_id": admin_id, "accion": accion,
+                           "target_id": target_id, "detalle": detalle or "",
+                           "creado_en": _dt.datetime.now().isoformat(timespec="seconds")})
+
+    def list_audit(self, limit=20, offset=0):
+        items = list(reversed(self.audit))
+        return {"items": items[offset:offset + limit], "total": len(items)}
 
     def update_user(self, user):
         self.users[user["email"].lower()] = user
@@ -236,6 +247,32 @@ class MysqlAuthStore:
             ok = cur.rowcount == 1
             conn.commit()
             return ok
+        finally:
+            conn.close()
+
+    def append_audit(self, admin_id, accion, target_id=None, detalle=""):
+        conn = self._connect()
+        try:
+            cur = conn.cursor()
+            cur.execute("INSERT INTO admin_audit (admin_id, accion, target_id, detalle) "
+                        "VALUES (%s,%s,%s,%s)", (admin_id, accion, target_id, (detalle or "")[:300]))
+            conn.commit()
+        finally:
+            conn.close()
+
+    def list_audit(self, limit=20, offset=0):
+        conn = self._connect()
+        try:
+            cur = conn.cursor(dictionary=True)
+            cur.execute("SELECT COUNT(*) AS total FROM admin_audit")
+            total = cur.fetchone()["total"]
+            cur.execute("SELECT a.id, a.admin_id, u.nombre AS admin, a.accion, a.target_id, "
+                        "t.nombre AS objetivo, a.detalle, a.creado_en FROM admin_audit a "
+                        "LEFT JOIN users u ON u.id=a.admin_id "
+                        "LEFT JOIN users t ON t.id=a.target_id "
+                        "ORDER BY a.id DESC LIMIT %s OFFSET %s", (limit, offset))
+            items = [dict(r, creado_en=str(r.get("creado_en"))) for r in cur.fetchall()]
+            return {"items": items, "total": total}
         finally:
             conn.close()
 
@@ -492,6 +529,18 @@ class AuthService:
             return self.store.list_users(limit, offset)
         return {"items": [], "total": 0}
 
+    def audit(self, token, accion, target_id=None, detalle=""):
+        admin = self._admin(token)
+        self.store.append_audit(admin["id"], accion, target_id, detalle)
+        return True
+
+    def admin_audit_list(self, token, limit=20, offset=0):
+        self._admin(token)
+        limit, offset = self._page(limit, offset)
+        if hasattr(self.store, "list_audit"):
+            return self.store.list_audit(limit, offset)
+        return {"items": [], "total": 0}
+
     def admin_estado(self, token, target_id, estado):
         admin = self._admin(token)
         if estado not in ("activo", "desactivada"):
@@ -504,6 +553,7 @@ class AuthService:
             raise AuthError("datos_invalidos", "No puedes cambiar tu propia cuenta.")
         if not self.store.set_estado(target_id, estado):
             raise AuthError("datos_invalidos", "Usuario no encontrado.")
+        self.store.append_audit(admin["id"], "estado", target_id, "estado=" + estado)
         return True
 
     def admin_unlock(self, token, target_id):
@@ -518,6 +568,7 @@ class AuthService:
         user["failed"] = 0
         user["locked_until"] = 0
         self.store.update_user(user)
+        self.store.append_audit(admin["id"], "desbloquear", target_id, "")
         return True
 
     def admin_reset(self, token, target_id, nueva):
@@ -533,6 +584,7 @@ class AuthService:
             raise AuthError("datos_invalidos", err)
         if not self.store.set_password(target_id, hash_password(nueva)):
             raise AuthError("datos_invalidos", "Usuario no encontrado.")
+        self.store.append_audit(admin["id"], "reset_password", target_id, "")
         return True
 
     def admin_rol(self, token, target_id, rol):
@@ -554,6 +606,7 @@ class AuthService:
                 raise AuthError("datos_invalidos", "Usuario no encontrado.")
         else:
             self.store.update_user(user)
+        self.store.append_audit(admin["id"], "rol", target_id, "rol=" + rol)
         return True
 
     def profile(self, token):

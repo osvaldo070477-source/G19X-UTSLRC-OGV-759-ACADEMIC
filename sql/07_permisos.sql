@@ -29,6 +29,8 @@ GRANT SELECT, INSERT ON nexo_app.source_audit TO 'nexo_app'@'127.0.0.1';
 GRANT SELECT, INSERT ON nexo_app.source_audit TO 'nexo_app'@'localhost';
 GRANT SELECT, INSERT, UPDATE ON nexo_app.asset_meta TO 'nexo_app'@'127.0.0.1';
 GRANT SELECT, INSERT, UPDATE ON nexo_app.asset_meta TO 'nexo_app'@'localhost';
+GRANT SELECT, INSERT ON nexo_app.admin_audit TO 'nexo_app'@'127.0.0.1';
+GRANT SELECT, INSERT ON nexo_app.admin_audit TO 'nexo_app'@'localhost';
 GRANT SELECT, INSERT ON nexo_app.agent_steps TO 'nexo_app'@'127.0.0.1';
 GRANT SELECT, INSERT ON nexo_app.agent_steps TO 'nexo_app'@'localhost';
 GRANT SELECT, INSERT ON nexo_app.tool_calls TO 'nexo_app'@'127.0.0.1';

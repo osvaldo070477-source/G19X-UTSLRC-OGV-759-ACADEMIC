@@ -229,6 +229,23 @@ class TestAdmin(unittest.TestCase):
             s.admin_rol(tu, uid, "admin")
         self.assertEqual(c2.exception.code, "no_autorizado")
 
+    def test_auditoria_admin(self):
+        s, ta, tu, uid = self.admin_svc()
+        s.admin_estado(ta, uid, "desactivada")
+        s.admin_unlock(ta, uid)
+        s.admin_reset(ta, uid, "Nueva1234")
+        s.admin_rol(ta, uid, "lector")
+        res = s.admin_audit_list(ta)
+        self.assertEqual(res["total"], 4)
+        accs = [x["accion"] for x in res["items"]]
+        self.assertEqual(accs, ["rol", "reset_password", "desbloquear", "estado"])
+        self.assertEqual(res["items"][0]["target_id"], uid)
+        with self.assertRaises(AuthError):
+            s.admin_audit_list(tu)
+        pg = s.admin_audit_list(ta, limit=2, offset=0)
+        self.assertEqual(len(pg["items"]), 2)
+        self.assertEqual(pg["total"], 4)
+
 
 class TestDDL(unittest.TestCase):
     def test_migracion_06(self):

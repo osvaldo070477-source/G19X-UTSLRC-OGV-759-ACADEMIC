@@ -1202,8 +1202,10 @@ function renderAdmin(){
   var w=$("adminWrap");
   if(state.mode==="demo"||!state.user||state.user.rol!=="admin"){
     w.innerHTML="<p class='empty'>Sección solo para administradores.</p>";
+    $("adminAuditWrap").innerHTML="<p class='empty'>Sin registros.</p>";
     return;
   }
+  renderAdminAudit();
   apiGet("admin_users&limit=50&offset=0").then(function(res){
     if(res.code!==200){ w.innerHTML="<p class='empty'>"+esc(res.body.error||"Sin permiso.")+"</p>"; return; }
     var items=res.body.items||[];
@@ -1259,6 +1261,28 @@ function renderAdmin(){
         $("adminResetBox").hidden=false;
         $("adNew").focus();
       });
+    });
+  }).catch(function(){ w.innerHTML="<p class='empty'>Sin conexión con el servicio.</p>"; });
+}
+function renderAdminAudit(page){
+  var w=$("adminAuditWrap"), p=Math.max(0,page||0);
+  apiGet("admin_audit&limit=10&offset="+(p*10)).then(function(res){
+    if(res.code!==200){ w.innerHTML="<p class='empty'>"+esc(res.body.error||"Sin permiso.")+"</p>"; return; }
+    var items=res.body.items||[], total=res.body.total||0;
+    var pages=Math.max(1,Math.ceil(total/10));
+    if(!items.length){ w.innerHTML="<p class='empty'>Sin acciones registradas.</p>"; return; }
+    w.innerHTML="<table><thead><tr><th>Fecha</th><th>Admin</th><th>Acción</th><th>Detalle</th></tr></thead><tbody>"+
+      items.map(function(x){
+        return "<tr><td>"+esc(String(x.creado_en||"").slice(0,16).replace("T"," "))+"</td>"+
+        "<td>"+esc(x.admin||("#"+x.admin_id))+"</td>"+
+        "<td><span class='badge estado'>"+esc(x.accion)+"</span></td>"+
+        "<td class='small'>"+esc([x.objetivo||(x.target_id?("#"+x.target_id):""),x.detalle||""].filter(Boolean).join(" · "))+"</td></tr>";
+      }).join("")+"</tbody></table>"+
+      "<div class='dec-actions pager pgbar'><button class='btn ghost' data-apg='"+(p-1)+"'"+(p<=0?" disabled":"")+">Anterior</button>"+
+      "<span class='muted small'>Página "+(p+1)+" de "+pages+" · "+total+" en total</span>"+
+      "<button class='btn ghost' data-apg='"+(p+1)+"'"+(p>=pages-1?" disabled":"")+">Siguiente</button></div>";
+    w.querySelectorAll("[data-apg]").forEach(function(b){
+      b.addEventListener("click", function(){ renderAdminAudit(+b.getAttribute("data-apg")); });
     });
   }).catch(function(){ w.innerHTML="<p class='empty'>Sin conexión con el servicio.</p>"; });
 }

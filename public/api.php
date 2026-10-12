@@ -100,6 +100,7 @@ $routes = [
     'source_meta'    => ['POST', '/api/source/meta'],
     'source_meta_get' => ['GET', '/api/catalog?muestra=0'],
     'admin_users'   => ['GET', '/api/admin/users' . '?limit=' . max(1, min(50, (int)($_GET['limit'] ?? 20))) . '&offset=' . max(0, (int)($_GET['offset'] ?? 0))],
+    'admin_audit'   => ['GET', '/api/admin/audit' . '?limit=' . max(1, min(50, (int)($_GET['limit'] ?? 20))) . '&offset=' . max(0, (int)($_GET['offset'] ?? 0))],
     'admin_estado'  => ['POST', '/api/admin/users/' . (int)($_GET['id'] ?? 0) . '/estado'],
     'admin_desbloquear' => ['POST', '/api/admin/users/' . (int)($_GET['id'] ?? 0) . '/desbloquear'],
     'admin_reset'   => ['POST', '/api/admin/users/' . (int)($_GET['id'] ?? 0) . '/reset_password'],

@@ -32,6 +32,7 @@ Rutas (prefijo /api):
   POST /api/auth/change_password (token + sesión) {actual, nueva}
   GET  /api/auth/activity (token + sesión) decisiones propias paginadas
   GET  /api/admin/users  (token + sesión admin) lista sin hashes
+  GET  /api/admin/audit  (token + sesión admin) quién hizo qué, paginado
   POST /api/admin/users/<id>/estado|desbloquear|reset_password|rol (admin)
   POST /api/auth/recover     (token) {email, codigo, nueva}
   POST /api/source/add       (token + sesión) {tabla, fila} requiere MySQL
@@ -430,6 +431,19 @@ class Handler(BaseHTTPRequestHandler):
             else:
                 self._send(200, res)
             return
+        if path == "/api/admin/audit":
+            qs = parse_qs(parsed.query)
+            try:
+                res = self.server.auth.admin_audit_list(self.headers.get("X-NEXO-Session") or "",
+                                                        qs.get("limit", ["20"])[0], qs.get("offset", ["0"])[0])
+            except AuthError as e:
+                self._auth_error(e)
+            except Exception as e:
+                log_internal("admin_audit", e)
+                self._send(502, {"error": "No fue posible listar la auditoría. Inténtalo de nuevo."})
+            else:
+                self._send(200, res)
+            return
         if path == "/api/agent/jobs":
             qs = parse_qs(parsed.query)
             try:
@@ -698,6 +712,8 @@ class Handler(BaseHTTPRequestHandler):
                         return
                     save_meta(MYSQL_CFG, tabla, data.get("descripcion", ""),
                               data.get("responsable", ""))
+                    self.server.auth.audit(self.headers.get("X-NEXO-Session") or "",
+                                           "meta", None, "tabla=" + tabla)
                     self._send(200, {"ok": True})
                     return
                 if path == "/api/source/add":
