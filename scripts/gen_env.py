@@ -45,6 +45,8 @@ NEXO_RO_USER=nexo_ro
 NEXO_RO_PASSWORD={secrets.token_urlsafe(18)}
 NEXO_APP_USER=nexo_app
 NEXO_APP_PASSWORD={secrets.token_urlsafe(18)}
+NEXO_WR_USER=nexo_wr
+NEXO_WR_PASSWORD={secrets.token_urlsafe(18)}
 """
     for k, v in AI_DEFAULTS.items():
         content += f"{k}={v}\n"

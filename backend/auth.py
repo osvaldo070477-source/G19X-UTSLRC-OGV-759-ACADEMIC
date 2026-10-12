@@ -101,10 +101,17 @@ class MemoryAuthStore:
         self.seq[0] += 1
         user = {"id": self.seq[0], "nombre": nombre, "email": email,
                 "pw_hash": pw_hash, "failed": 0, "locked_until": 0,
-                "rol": "operador", "estado": "activo",
+                "rol": "operador", "estado": "activo", "recovery_hash": None,
                 "creado_en": time.strftime("%Y-%m-%d %H:%M:%S")}
         self.users[email.lower()] = user
         return user
+
+    def set_recovery(self, uid, thash):
+        for u in self.users.values():
+            if u["id"] == uid:
+                u["recovery_hash"] = thash
+                return True
+        return False
 
     def update_user(self, user):
         self.users[user["email"].lower()] = user
@@ -174,7 +181,7 @@ class MysqlAuthStore:
         try:
             cur = conn.cursor(dictionary=True)
             cur.execute("SELECT id, nombre, email, pw_hash, failed_attempts, locked_until, rol, estado, "
-                        "creado_en FROM users WHERE email=%s", (email.lower(),))
+                        "recovery_hash, creado_en FROM users WHERE email=%s", (email.lower(),))
             r = cur.fetchone()
             if not r:
                 return None
@@ -182,6 +189,7 @@ class MysqlAuthStore:
                     "pw_hash": r["pw_hash"], "failed": r["failed_attempts"] or 0,
                     "locked_until": (r["locked_until"] or 0),
                     "rol": r.get("rol") or "operador", "estado": r.get("estado") or "activo",
+                    "recovery_hash": r.get("recovery_hash"),
                     "creado_en": str(r.get("creado_en") or "")}
         finally:
             conn.close()
@@ -214,6 +222,17 @@ class MysqlAuthStore:
         try:
             cur = conn.cursor()
             cur.execute("UPDATE users SET estado=%s WHERE id=%s", (estado, uid))
+            ok = cur.rowcount == 1
+            conn.commit()
+            return ok
+        finally:
+            conn.close()
+
+    def set_recovery(self, uid, thash):
+        conn = self._connect()
+        try:
+            cur = conn.cursor()
+            cur.execute("UPDATE users SET recovery_hash=%s WHERE id=%s", (thash, uid))
             ok = cur.rowcount == 1
             conn.commit()
             return ok
@@ -304,7 +323,7 @@ class MysqlAuthStore:
         try:
             cur = conn.cursor(dictionary=True)
             cur.execute("SELECT id, nombre, email, pw_hash, failed_attempts, locked_until, rol, estado, "
-                        "creado_en FROM users WHERE id=%s", (uid,))
+                        "recovery_hash, creado_en FROM users WHERE id=%s", (uid,))
             r = cur.fetchone()
             if not r:
                 return None
@@ -312,6 +331,7 @@ class MysqlAuthStore:
                     "pw_hash": r["pw_hash"], "failed": r["failed_attempts"] or 0,
                     "locked_until": (r["locked_until"] or 0),
                     "rol": r.get("rol") or "operador", "estado": r.get("estado") or "activo",
+                    "recovery_hash": r.get("recovery_hash"),
                     "creado_en": str(r.get("creado_en") or "")}
         finally:
             conn.close()
@@ -373,6 +393,30 @@ class AuthService:
                 raise AuthError("email_en_uso", "Ese correo ya está registrado. Prueba a iniciar sesión.") from e
             raise
         return user, self._new_session(user)
+
+    def issue_recovery(self, uid):
+        """Genera un código de un solo uso. Devuelve el código en claro (mostrar una vez)."""
+        alfabeto = "abcdefghijkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+        codigo = "".join(secrets.choice(alfabeto) for _ in range(12))
+        self.store.set_recovery(uid, token_hash(codigo))
+        return codigo
+
+    def recover(self, email, codigo, nueva):
+        email, err = validate_email(email)
+        if err:
+            raise AuthError("credenciales_invalidas", "Datos inválidos o código vencido.")
+        user = self.store.find_user(email)
+        ok = bool(user) and user.get("recovery_hash") and secrets.compare_digest(
+            user["recovery_hash"], token_hash(str(codigo or "")))
+        if not ok:
+            raise AuthError("credenciales_invalidas", "Datos inválidos o código vencido.")
+        err = validate_password(nueva)
+        if err:
+            raise AuthError("datos_invalidos", err)
+        if not self.store.set_password(user["id"], hash_password(nueva)):
+            raise AuthError("sesion_invalida", "Sesión vencida o inválida.")
+        self.store.set_recovery(user["id"], None)
+        return user
 
     def login(self, email, password):
         email, err = validate_email(email)

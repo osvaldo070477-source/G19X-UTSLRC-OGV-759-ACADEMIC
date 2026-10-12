@@ -229,6 +229,9 @@ tbody tr:hover{background:rgba(255,255,255,.03)}
 .kv{display:grid;grid-template-columns:auto 1fr;gap:.3rem .8rem;margin:.5rem 0;font-size:.9rem}
 .kv dt{font-weight:700;color:#fff} .kv dd{margin:0;color:var(--muted)}
 .form-col{display:grid;gap:var(--s3)}
+.pgbar{align-items:center;margin-top:var(--s2)}
+.pgbar .muted{margin:0}
+#csvResult{margin-top:var(--s3)}
 .agent-list{list-style:none;margin:.5rem 0 0;padding:0;display:grid;gap:var(--s2)}
 .agent-list li{background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:10px;padding:.6rem .8rem;font-size:.9rem}
 .stages{list-style:none;margin:.6rem 0;padding:0;display:grid;gap:var(--s2)}

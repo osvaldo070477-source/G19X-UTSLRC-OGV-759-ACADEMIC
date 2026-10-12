@@ -168,6 +168,7 @@
             </label>
           </div>
           <button id="btnClearFilters" class="btn ghost" hidden>Limpiar filtros</button>
+          <button id="btnImportCSV" class="btn" hidden>Importar CSV</button>
         </div>
         <div id="catalogList" class="catalog"></div>
       </section>
@@ -410,6 +411,7 @@
     </label>
     <p class="field-err" id="liPassErr" hidden></p>
     <p class="field-err" id="loginErr" hidden></p>
+    <p class="access-alt"><button id="btnShowRecover" class="btn link" type="button">¿Olvidaste tu contraseña?</button></p>
     <div class="dec-actions">
       <button type="submit" class="btn primary">Entrar</button>
       <button type="button" class="btn ghost" data-close>Cancelar</button>
@@ -445,8 +447,67 @@
     </label>
     <p class="field-err" id="rgPass2Err" hidden></p>
     <p class="field-err" id="regErr" hidden></p>
+    <p class="state-line" id="regCode" role="status"></p>
     <div class="dec-actions">
       <button type="submit" class="btn primary">Registrarme</button>
+      <button type="button" class="btn ghost" data-close>Cancelar</button>
+    </div>
+  </form>
+</div>
+<div id="modalRow" class="modal" role="dialog" aria-modal="true" aria-labelledby="rowTitle" hidden>
+  <h2 id="rowTitle">Agregar registro</h2>
+  <form id="formRow" novalidate>
+    <div id="rowFields" class="form-col"></div>
+    <p class="field-err" id="rowErr" hidden></p>
+    <p class="state-line" id="rowMsg" role="status"></p>
+    <div class="dec-actions">
+      <button type="submit" class="btn primary">Guardar</button>
+      <button type="button" class="btn ghost" data-close>Cancelar</button>
+    </div>
+  </form>
+</div>
+<div id="modalCSV" class="modal" role="dialog" aria-modal="true" aria-labelledby="csvTitle" hidden>
+  <h2 id="csvTitle">Importar CSV</h2>
+  <label for="csvTable">Tabla
+    <select id="csvTable">
+      <option value="clientes">clientes</option>
+      <option value="pedidos">pedidos</option>
+      <option value="productos">productos</option>
+    </select>
+  </label>
+  <p class="muted small">El archivo debe traer encabezados iguales a las columnas. Primero se valida, luego decides importar.</p>
+  <label for="csvFile">Archivo .csv
+    <input id="csvFile" type="file" accept=".csv,text/csv">
+  </label>
+  <div class="dec-actions">
+    <button id="btnCSVPreview" class="btn primary">Validar</button>
+    <button type="button" class="btn ghost" data-close>Cancelar</button>
+  </div>
+  <div id="csvResult"></div>
+  <div class="dec-actions">
+    <button id="btnCSVImport" class="btn primary" hidden>Importar filas válidas</button>
+  </div>
+</div>
+<div id="modalRecover" class="modal" role="dialog" aria-modal="true" aria-labelledby="recTitle" hidden>
+  <h2 id="recTitle">Recuperar contraseña</h2>
+  <p class="muted small">Usa el código de 12 caracteres que se mostró al registrarte. Solo sirve una vez.</p>
+  <form id="formRecover" novalidate>
+    <label for="rcEmail">Correo electrónico
+      <input id="rcEmail" type="email" autocomplete="email" required>
+    </label>
+    <p class="field-err" id="rcEmailErr" hidden></p>
+    <label for="rcCode">Código de recuperación
+      <input id="rcCode" type="text" autocomplete="off" maxlength="12" required>
+    </label>
+    <p class="field-err" id="rcCodeErr" hidden></p>
+    <label for="rcNew">Contraseña nueva
+      <input id="rcNew" type="password" autocomplete="new-password" maxlength="72" required>
+    </label>
+    <p class="field-err" id="rcNewErr" hidden></p>
+    <p class="field-err" id="recErr" hidden></p>
+    <p class="state-line" id="recMsg" role="status"></p>
+    <div class="dec-actions">
+      <button type="submit" class="btn primary">Cambiar contraseña</button>
       <button type="button" class="btn ghost" data-close>Cancelar</button>
     </div>
   </form>

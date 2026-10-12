@@ -23,7 +23,7 @@ def check(name, cond):
 
 html_ids = set(re.findall(r'id="([A-Za-z]+)"', html))
 js_ids = set(re.findall(r'\$\("([A-Za-z]+)"\)', js))
-DYNAMIC = {"agApprove", "agReject", "agRevComment"}  # creados por JS al pintar revisiones
+DYNAMIC = {"agApprove", "agReject", "agRevComment", "btnRegDone"}  # creados por JS al pintar
 missing = sorted(i for i in js_ids if i not in html_ids and i not in DYNAMIC)
 check(f"IDs de JS existen en HTML ({len(js_ids)} usados)", not missing)
 for m in missing:

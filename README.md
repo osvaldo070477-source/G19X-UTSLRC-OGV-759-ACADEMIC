@@ -149,7 +149,23 @@ en MySQL), **Seguridad** (cambio de contraseña verificando la actual) y
   `.\.venv\Scripts\python.exe scripts/crea_admin.py correo` (cuenta ya registrada).
 - Sin MySQL todo es temporal (memoria); con MySQL aplica `sql/06_auth.sql`
   y `sql/07_permisos.sql` (obligatorio para que el acceso funcione).
+- Al registrarte recibes un **código de recuperación** de 12 caracteres
+  (guárdalo: solo se muestra una vez). Si olvidas tu clave, úsalo en
+  **Iniciar sesión → ¿Olvidaste tu contraseña?** Como respaldo, un admin
+  puede restablecerla.
 - Alcance local de un operador: no es autenticación empresarial.
+
+## 7b. Carga de datos (requiere modo conectado y sesión)
+
+- **Catálogo → Agregar registro**: formulario por activo con las columnas
+  permitidas; valida igual que el motor y rechaza duplicados y formatos malos.
+- **Catálogo → Importar CSV**: sube un `.csv` con encabezados; primero se
+  **valida** (válidas vs. rechazadas con motivo por línea) y tú confirmas la
+  importación de las válidas. Máximo 500 filas por lote y 10 000 por tabla.
+- Cada fila guarda quién la cargó (`source_audit`); la escritura usa la cuenta
+  exclusiva `nexo_wr` (solo INSERT en la fuente).
+- **Editar ficha** (admin): cambia descripción y responsable del activo.
+- Tras cargar, ejecuta un análisis para ver los datos en Calidad.
 
 ## 8. Reglas y muestra
 - **Obligatoriedad:** nulo/ausente/espacios = incidencia; **0 no es vacío**.

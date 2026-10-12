@@ -33,6 +33,11 @@ Rutas (prefijo /api):
   GET  /api/auth/activity (token + sesión) decisiones propias paginadas
   GET  /api/admin/users  (token + sesión admin) lista sin hashes
   POST /api/admin/users/<id>/estado|desbloquear|reset_password (admin)
+  POST /api/auth/recover     (token) {email, codigo, nueva}
+  POST /api/source/add       (token + sesión) {tabla, fila} requiere MySQL
+  POST /api/source/preview   (token + sesión) {tabla, filas|csv} solo valida
+  POST /api/source/import    (token + sesión) {tabla, filas|csv} guarda válidas
+  POST /api/source/meta      (token + sesión admin) {tabla, descripcion, responsable}
   POST /api/auth/logout   (token + sesión) cierra la sesión
 
 Auth: cabecera X-NEXO-Token == NEXO_INTERNAL_TOKEN del .env.
@@ -58,6 +63,9 @@ from providers import ai_config_from_env, make_provider, provider_status  # noqa
 from jobs import Manager, MemoryStore, MysqlStore  # noqa: E402
 from agents import AGENTS  # noqa: E402
 from auth import AuthError, AuthService, MemoryAuthStore, MysqlAuthStore  # noqa: E402
+from carga import (MAX_IMPORT_BATCH, SCHEMAS, existing_ids, fetch_meta,  # noqa: E402
+                   insert_validas, parse_csv, preview_rows, save_meta, table_count,
+                   validate_row)
 
 VERSION = "1.1.0"
 MAX_ROWS_PER_TABLE = 10000
@@ -97,6 +105,8 @@ MYSQL_CFG = {
 SOURCE_CFG = dict(MYSQL_CFG, user=os.environ.get("NEXO_RO_USER", ""),
                   password=os.environ.get("NEXO_RO_PASSWORD", ""),
                   database="nexo_source")
+WR_CFG = dict(MYSQL_CFG, user=os.environ.get("NEXO_WR_USER", "nexo_wr"),
+              password=os.environ.get("NEXO_WR_PASSWORD", ""))
 
 
 def log_internal(action, exc):
@@ -485,20 +495,41 @@ class Handler(BaseHTTPRequestHandler):
                 self._send(502, {"error": f"No se pudo recuperar la ejecución: {e}"})
             return
         if path == "/api/catalog":
+            qs = parse_qs(parsed.query)
+            con_muestra = qs.get("muestra", ["0"])[0] == "1"
             try:
                 if self.server.use_mysql:
                     tables = fetch_source_tables()
                     counts = {k: len(v) for k, v in tables.items()}
-                    self._send(200, {"metadatos": METADATA, "conteos": counts, "muestra": None,
-                                     "nota": "Modo MySQL: la vista de datos vive en la base nexo_source."})
+                    try:
+                        meta_db = fetch_meta(MYSQL_CFG)
+                    except Exception:
+                        meta_db = {}
+                    metadatos = {t: {**METADATA[t], **{k: v for k, v in meta_db.get(t, {}).items()
+                                                      if k in ("nombre", "descripcion", "responsable", "dominio")}}
+                                 for t in METADATA}
+                    respuesta = {"metadatos": metadatos, "conteos": counts, "muestra": None,
+                                 "nota": "Modo MySQL: la vista de datos vive en la base nexo_source."}
+                    if con_muestra:
+                        respuesta["muestra"] = {t: rows[:500] for t, rows in tables.items()}
+                        respuesta["nota"] += " Vista limitada a 500 filas por tabla."
+                    self._send(200, respuesta)
                 else:
                     tables = get_sample_tables()
                     self._send(200, {"metadatos": METADATA, "conteos": {k: len(v) for k, v in tables.items()},
                                      "muestra": tables})
             except Exception as e:
-                self._send(502, {"error": f"No se pudo leer el origen: {e}"})
+                log_internal("catalog", e)
+                self._send(502, {"error": "No se pudo leer el origen."})
             return
         self._send(404, {"error": "Ruta no encontrada."})
+
+    def _require_admin(self):
+        try:
+            return self.server.auth._admin(self.headers.get("X-NEXO-Session") or "")
+        except AuthError as e:
+            self._auth_error(e)
+            return None
 
     def _session_user(self):
         """Devuelve el perfil público o None (invitado). Nunca falla."""
@@ -519,7 +550,10 @@ class Handler(BaseHTTPRequestHandler):
         path = parsed.path
         if path not in ("/api/analyze", "/api/decisions",
                         "/api/auth/register", "/api/auth/login", "/api/auth/logout",
-                        "/api/auth/update_name", "/api/auth/change_password") \
+                        "/api/auth/update_name", "/api/auth/change_password",
+                        "/api/auth/recover",
+                        "/api/source/add", "/api/source/preview", "/api/source/import",
+                        "/api/source/meta") \
                 and not path.startswith("/api/agent/jobs") \
                 and not path.startswith("/api/admin/users"):
             self._send(404, {"error": "Ruta no encontrada."})
@@ -535,13 +569,27 @@ class Handler(BaseHTTPRequestHandler):
             try:
                 user, session = self.server.auth.register(
                     data.get("nombre", ""), data.get("email", ""), data.get("password", ""))
+                codigo = self.server.auth.issue_recovery(user["id"])
             except AuthError as e:
                 self._auth_error(e)
             except Exception as e:
                 log_internal("register", e)
                 self._send(502, {"error": "No fue posible completar el registro. Inténtalo de nuevo."})
             else:
-                self._send(201, {"ok": True, "user": AuthService.public(user), "session": session})
+                self._send(201, {"ok": True, "user": AuthService.public(user), "session": session,
+                                 "recovery_code": codigo})
+            return
+        if path == "/api/auth/recover":
+            try:
+                user = self.server.auth.recover(
+                    data.get("email", ""), data.get("codigo", ""), data.get("nueva", ""))
+            except AuthError as e:
+                self._auth_error(e)
+            except Exception as e:
+                log_internal("recover", e)
+                self._send(502, {"error": "No fue posible completar la recuperación. Inténtalo de nuevo."})
+            else:
+                self._send(200, {"ok": True, "user": AuthService.public(user)})
             return
         if path == "/api/auth/login":
             try:
@@ -608,6 +656,80 @@ class Handler(BaseHTTPRequestHandler):
                 self._send(502, {"error": "No fue posible cambiar la contraseña. Inténtalo de nuevo."})
             else:
                 self._send(200, {"ok": True})
+            return
+        if path in ("/api/source/add", "/api/source/preview", "/api/source/import",
+                    "/api/source/meta"):
+            if not self.server.use_mysql:
+                self._send(409, {"error": "La carga requiere el modo conectado con MySQL."})
+                return
+            try:
+                author = self.server.auth.user_public(
+                    self.server.auth.me(self.headers.get("X-NEXO-Session") or ""))
+            except AuthError as e:
+                self._auth_error(e)
+                return
+            tabla = data.get("tabla", "")
+            if tabla not in SCHEMAS:
+                self._send(400, {"error": "Tabla no permitida."})
+                return
+            try:
+                if path == "/api/source/meta":
+                    if author.get("rol") != "admin":
+                        self._send(403, {"error": "Solo el admin edita metadatos."})
+                        return
+                    save_meta(MYSQL_CFG, tabla, data.get("descripcion", ""),
+                              data.get("responsable", ""))
+                    self._send(200, {"ok": True})
+                    return
+                if path == "/api/source/add":
+                    fila = data.get("fila")
+                    if not isinstance(fila, dict):
+                        self._send(400, {"error": "Falta la fila."})
+                        return
+                    limpia, err = validate_row(tabla, fila, existing_ids(SOURCE_CFG, tabla))
+                    if err:
+                        self._send(400, {"error": err})
+                        return
+                    res = insert_validas(WR_CFG, SOURCE_CFG, tabla, [limpia], author["id"])
+                    self._send(201, {"ok": True, **res})
+                    return
+                filas = data.get("filas")
+                if path == "/api/source/preview":
+                    if isinstance(filas, list):
+                        lote = [(i + 2, f) for i, f in enumerate(filas)]
+                    else:
+                        lote, err = parse_csv(data.get("csv", ""))
+                        if err:
+                            self._send(400, {"error": err})
+                            return
+                    if len(lote) > MAX_IMPORT_BATCH:
+                        self._send(400, {"error": f"Máximo {MAX_IMPORT_BATCH} filas por lote."})
+                        return
+                    self._send(200, preview_rows(tabla, lote, existing_ids(SOURCE_CFG, tabla)))
+                    return
+                # /api/source/import: solo guarda las válidas e informa.
+                lote = [(i + 2, f) for i, f in enumerate(filas)] if isinstance(filas, list) else []
+                if not lote:
+                    lote, err = parse_csv(data.get("csv", ""))
+                    if err:
+                        self._send(400, {"error": err})
+                        return
+                if len(lote) > MAX_IMPORT_BATCH:
+                    self._send(400, {"error": f"Máximo {MAX_IMPORT_BATCH} filas por lote."})
+                    return
+                prev = preview_rows(tabla, lote, existing_ids(SOURCE_CFG, tabla))
+                hechas = insert_validas(WR_CFG, SOURCE_CFG, tabla, prev["validas"], author["id"]) \
+                    if prev["validas"] else {"insertadas": 0}
+                self._send(201, {"ok": True, "insertadas": hechas["insertadas"],
+                                 "rechazadas": prev["rechazadas"]})
+                return
+            except AuthError as e:
+                self._auth_error(e)
+            except ValueError as e:
+                self._send(400, {"error": str(e)})
+            except Exception as e:
+                log_internal("source", e)
+                self._send(502, {"error": "No fue posible completar la carga. Inténtalo de nuevo."})
             return
         if path == "/api/agent/jobs":
             try:

@@ -133,6 +133,20 @@ class TestServicio(unittest.TestCase):
             s.login("ana@example.com", "Segura123")
         self.assertEqual(c.exception.code, "credenciales_invalidas")
 
+    def test_recuperacion_un_solo_uso(self):
+        s = svc()
+        user, _ = s.register("Ana", "ana@example.com", "Segura123")
+        codigo = s.issue_recovery(user["id"])
+        self.assertEqual(len(codigo), 12)
+        u2 = s.recover("ana@example.com", codigo, "Nueva1234")
+        self.assertEqual(u2["id"], user["id"])
+        u3, _ = s.login("ana@example.com", "Nueva1234")
+        self.assertEqual(u3["id"], user["id"])
+        with self.assertRaises(AuthError):
+            s.recover("ana@example.com", codigo, "Otra1234")
+        with self.assertRaises(AuthError):
+            s.recover("ana@example.com", "codigo000000", "Otra1234")
+
     def test_actividad_solo_propia(self):
         s = svc()
         a, ta = s.register("Ana", "ana@example.com", "Segura123")

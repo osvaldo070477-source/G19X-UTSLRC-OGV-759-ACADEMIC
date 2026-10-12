@@ -60,7 +60,7 @@ $action = $_GET['action'] ?? '';
 $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 
 // Escrituras solo desde el mismo origen (el fetch de nuestra página).
-if (in_array($action, ['analyze', 'decisions', 'agent_start', 'agent_cancel', 'agent_review', 'agent_retry', 'auth_register', 'auth_login', 'auth_logout', 'auth_update_name', 'auth_change_password', 'admin_estado', 'admin_desbloquear', 'admin_reset'], true)) {
+if (in_array($action, ['analyze', 'decisions', 'agent_start', 'agent_cancel', 'agent_review', 'agent_retry', 'auth_register', 'auth_login', 'auth_logout', 'auth_update_name', 'auth_change_password', 'auth_recover', 'admin_estado', 'admin_desbloquear', 'admin_reset', 'source_add', 'source_preview', 'source_import', 'source_meta'], true)) {
     $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
     $referer = $_SERVER['HTTP_REFERER'] ?? '';
     $host = $_SERVER['HTTP_HOST'] ?? '';
@@ -93,6 +93,12 @@ $routes = [
     'auth_activity' => ['GET', '/api/auth/activity' . '?limit=' . max(1, min(50, (int)($_GET['limit'] ?? 10))) . '&offset=' . max(0, (int)($_GET['offset'] ?? 0))],
     'auth_logout'   => ['POST', '/api/auth/logout'],
     'auth_csrf'     => ['GET', 'local'],
+    'auth_recover'  => ['POST', '/api/auth/recover'],
+    'source_add'     => ['POST', '/api/source/add'],
+    'source_preview' => ['POST', '/api/source/preview'],
+    'source_import'  => ['POST', '/api/source/import'],
+    'source_meta'    => ['POST', '/api/source/meta'],
+    'source_meta_get' => ['GET', '/api/catalog?muestra=0'],
     'admin_users'   => ['GET', '/api/admin/users' . '?limit=' . max(1, min(50, (int)($_GET['limit'] ?? 20))) . '&offset=' . max(0, (int)($_GET['offset'] ?? 0))],
     'admin_estado'  => ['POST', '/api/admin/users/' . (int)($_GET['id'] ?? 0) . '/estado'],
     'admin_desbloquear' => ['POST', '/api/admin/users/' . (int)($_GET['id'] ?? 0) . '/desbloquear'],
@@ -168,6 +174,17 @@ if ($expectMethod === 'POST') {
         }
         $data = ['email' => $data['email'], 'password' => $data['password']];
     }
+    if ($action === 'auth_recover') {
+        foreach (['email', 'codigo', 'nueva'] as $f) {
+            if (!isset($data[$f]) || !is_string($data[$f]) || $data[$f] === '') {
+                nexo_out(400, ['error' => 'Completa todos los campos.']);
+            }
+        }
+        if (strlen($data['nueva']) > 72) {
+            nexo_out(400, ['error' => 'La contraseña nueva es demasiado larga.']);
+        }
+        $data = ['email' => $data['email'], 'codigo' => $data['codigo'], 'nueva' => $data['nueva']];
+    }
     if ($action === 'auth_update_name') {
         if (!isset($data['nombre']) || !is_string($data['nombre']) || trim($data['nombre']) === '') {
             nexo_out(400, ['error' => 'Escribe tu nombre.']);
@@ -202,6 +219,19 @@ if ($expectMethod === 'POST') {
     }
     if ($action === 'admin_desbloquear') {
         $data = [];
+    }
+    if (in_array($action, ['source_add', 'source_preview', 'source_import', 'source_meta'], true)) {
+        if (!isset($data['tabla']) || !in_array($data['tabla'], ['clientes', 'pedidos', 'productos'], true)) {
+            nexo_out(400, ['error' => 'Tabla no permitida.']);
+        }
+        $paso = ['tabla' => $data['tabla']];
+        foreach (['fila', 'filas', 'csv', 'descripcion', 'responsable'] as $k) {
+            if (array_key_exists($k, $data)) $paso[$k] = $data[$k];
+        }
+        if (isset($paso['csv']) && (!is_string($paso['csv']) || strlen($paso['csv']) > 2000000)) {
+            nexo_out(400, ['error' => 'CSV inválido o demasiado grande (máx. 2 MB).']);
+        }
+        $data = $paso;
     }
     if ($action === 'auth_logout') {
         $data = [];

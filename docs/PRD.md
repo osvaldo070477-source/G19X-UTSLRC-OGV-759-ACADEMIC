@@ -49,6 +49,10 @@ Demostrar el recorrido completo de gobierno de datos (conocer → verificar → 
 | RF15 | Usuarios locales con validación | Registro/login con reglas en cliente y servidor, bloqueo por intentos, sesiones de 8 h; decisiones firmadas |
 | RF16 | Perfil propio | Ficha con rol y registro, cambio de nombre y contraseña persistidos, actividad propia paginada; todo identificado desde la sesión |
 | RF17 | Administración básica | Lista sin hashes, activar/desactivar (sin auto-bloqueo), desbloquear y restablecer claves; todo verificado en servidor; primer admin vía script local |
+| RF18 | Carga gobernada | Formulario por activo e importar CSV con vista previa; validación, límites y auditoría por usuario |
+| RF19 | Metadatos editables | Admin edita descripción y responsable; el catálogo los lee de MySQL |
+| RF20 | Recuperación local | Código de un solo uso al registrarse; sin email externo |
+| RF21 | Paginación | Tablas de 10 en 10 sin perder eventos ni filtros |
 
 ## 8. Requisitos no funcionales
 - RNF1: Modo A funciona con `file://`, sin Internet ni dependencias.
