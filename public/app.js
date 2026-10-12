@@ -1403,7 +1403,10 @@ function paginateTables(root){
     var page=+tb.dataset.page||0;
     var pages=Math.ceil(rows.length/PAGE_SIZE);
     if(page>=pages) page=pages-1;
+    var key=page+"/"+pages+"/"+rows.length;
+    if(tb.dataset.pgstate===key) return;  // sin cambios: no tocar el DOM
     tb.dataset.page=page;
+    tb.dataset.pgstate=key;
     for(var i=0;i<rows.length;i++){
       rows[i].style.display=(i>=page*PAGE_SIZE&&i<(page+1)*PAGE_SIZE)?"":"none";
     }
