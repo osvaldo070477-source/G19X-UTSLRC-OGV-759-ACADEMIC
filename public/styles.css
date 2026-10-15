@@ -170,9 +170,10 @@ input[aria-invalid="true"]{border-color:var(--red)}
 .toolbar{display:flex;gap:var(--s3);flex-wrap:wrap;align-items:end;background:var(--card);
   border:1px solid var(--line);border-radius:var(--r-card);padding:var(--s4);margin-bottom:var(--s4)}
 .toolbar > label{min-width:150px}
-.toolbar .search-row{flex:1 1 240px;display:grid;gap:6px}
-#tab-catalogo .toolbar{display:grid;grid-template-columns:minmax(0,1fr) 170px 170px auto;gap:var(--s3);align-items:end}
-#tab-catalogo .search-row,#tab-catalogo .filter-row{display:contents}
+.cat-toolbar{display:grid;grid-template-columns:minmax(0,1fr) 180px 180px auto;gap:var(--s3);align-items:end}
+.cat-toolbar .field{display:grid;gap:6px;align-content:start;min-width:0}
+.cat-toolbar .field-spacer{display:block;min-height:1.2em}
+.cat-toolbar .dec-actions{margin-top:0;flex-wrap:nowrap}
 
 /* Catálogo */
 .catalog{display:grid;gap:var(--s4)}
@@ -321,7 +322,8 @@ tbody tr:hover{background:rgba(255,255,255,.03)}
   .sidebar{position:fixed;left:var(--s3);top:var(--s3);bottom:var(--s3);width:min(280px,84vw);
     margin:0;max-height:none;transform:translateX(calc(-100% - var(--s3)));transition:transform .2s ease}
   body.nav-open .sidebar{transform:none}
-  #tab-catalogo .toolbar{grid-template-columns:minmax(0,1fr)}
+  .cat-toolbar{grid-template-columns:minmax(0,1fr)}
+  .cat-toolbar .dec-actions{flex-wrap:wrap}
   .stats{grid-template-columns:repeat(2,minmax(0,1fr))}
   .top-title p{display:none}
 }

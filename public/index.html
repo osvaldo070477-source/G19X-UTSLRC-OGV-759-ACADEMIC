@@ -154,21 +154,26 @@
 
       <!-- CATÁLOGO -->
       <section id="tab-catalogo" class="tab" aria-label="Catálogo" hidden>
-        <div class="toolbar">
-          <div class="search-row">
+        <div class="toolbar cat-toolbar">
+          <div class="field">
             <label for="catSearch">Buscar en el catálogo</label>
             <input id="catSearch" type="search" placeholder="Ej. correo, responsable, producto…" autocomplete="off">
           </div>
-          <div class="filter-row">
-            <label for="catDomain">Dominio
-              <select id="catDomain"><option value="">Todos</option></select>
-            </label>
-            <label for="catTable">Activo
-              <select id="catTable"><option value="">Todos</option></select>
-            </label>
+          <div class="field">
+            <label for="catDomain">Dominio</label>
+            <select id="catDomain"><option value="">Todos</option></select>
           </div>
-          <button id="btnClearFilters" class="btn ghost" hidden>Limpiar filtros</button>
-          <button id="btnImportCSV" class="btn" hidden>Importar CSV</button>
+          <div class="field">
+            <label for="catTable">Activo</label>
+            <select id="catTable"><option value="">Todos</option></select>
+          </div>
+          <div class="field">
+            <span class="field-spacer" aria-hidden="true"></span>
+            <div class="dec-actions">
+              <button id="btnClearFilters" class="btn ghost" hidden>Limpiar filtros</button>
+              <button id="btnImportCSV" class="btn" hidden>Importar CSV</button>
+            </div>
+          </div>
         </div>
         <div id="catalogList" class="catalog"></div>
       </section>
