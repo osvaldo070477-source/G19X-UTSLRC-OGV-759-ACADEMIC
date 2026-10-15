@@ -60,7 +60,7 @@ $action = $_GET['action'] ?? '';
 $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 
 // Escrituras solo desde el mismo origen (el fetch de nuestra página).
-if (in_array($action, ['analyze', 'decisions', 'agent_start', 'agent_cancel', 'agent_review', 'agent_retry', 'auth_register', 'auth_login', 'auth_logout', 'auth_update_name', 'auth_change_password', 'auth_recover', 'admin_estado', 'admin_desbloquear', 'admin_reset', 'admin_rol', 'source_add', 'source_preview', 'source_import', 'source_meta'], true)) {
+if (in_array($action, ['analyze', 'decisions', 'agent_start', 'agent_cancel', 'agent_review', 'agent_retry', 'auth_register', 'auth_login', 'auth_logout', 'auth_update_name', 'auth_change_password', 'auth_recover', 'auth_recovery_regen', 'admin_estado', 'admin_desbloquear', 'admin_reset', 'admin_rol', 'source_add', 'source_preview', 'source_import', 'source_meta'], true)) {
     $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
     $referer = $_SERVER['HTTP_REFERER'] ?? '';
     $host = $_SERVER['HTTP_HOST'] ?? '';
@@ -94,6 +94,7 @@ $routes = [
     'auth_logout'   => ['POST', '/api/auth/logout'],
     'auth_csrf'     => ['GET', 'local'],
     'auth_recover'  => ['POST', '/api/auth/recover'],
+    'auth_recovery_regen' => ['POST', '/api/auth/recovery_regen'],
     'source_add'     => ['POST', '/api/source/add'],
     'source_preview' => ['POST', '/api/source/preview'],
     'source_import'  => ['POST', '/api/source/import'],
@@ -186,6 +187,9 @@ if ($expectMethod === 'POST') {
             nexo_out(400, ['error' => 'La contraseña nueva es demasiado larga.']);
         }
         $data = ['email' => $data['email'], 'codigo' => $data['codigo'], 'nueva' => $data['nueva']];
+    }
+    if ($action === 'auth_recovery_regen') {
+        $data = [];
     }
     if ($action === 'auth_update_name') {
         if (!isset($data['nombre']) || !is_string($data['nombre']) || trim($data['nombre']) === '') {

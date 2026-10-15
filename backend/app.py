@@ -35,6 +35,7 @@ Rutas (prefijo /api):
   GET  /api/admin/audit  (token + sesión admin) quién hizo qué, paginado
   POST /api/admin/users/<id>/estado|desbloquear|reset_password|rol (admin)
   POST /api/auth/recover     (token) {email, codigo, nueva}
+  POST /api/auth/recovery_regen (token + sesión) genera un código nuevo
   POST /api/source/add       (token + sesión) {tabla, fila} requiere MySQL
   POST /api/source/preview   (token + sesión) {tabla, filas|csv} solo valida
   POST /api/source/import    (token + sesión) {tabla, filas|csv} guarda válidas
@@ -110,12 +111,23 @@ WR_CFG = dict(MYSQL_CFG, user=os.environ.get("NEXO_WR_USER", "nexo_wr"),
               password=os.environ.get("NEXO_WR_PASSWORD", ""))
 
 
+LOG_MAX_BYTES = 1024 * 1024  # rota por cada 1 MB, conserva 3 archivos
+
+
 def log_internal(action, exc):
     """Detalle técnico solo en el log protegido del servidor, nunca al usuario."""
     try:
         logdir = os.path.join(os.path.dirname(BASE_DIR), "logs")
         os.makedirs(logdir, exist_ok=True)
-        with open(os.path.join(logdir, "nexo.log"), "a", encoding="utf-8") as f:
+        main = os.path.join(logdir, "nexo.log")
+        if os.path.exists(main) and os.path.getsize(main) > LOG_MAX_BYTES:
+            for i in range(2, 0, -1):
+                viejo = f"{main}.{i}"
+                nuevo = f"{main}.{i + 1}"
+                if os.path.exists(viejo):
+                    os.replace(viejo, nuevo)
+            os.replace(main, f"{main}.1")
+        with open(main, "a", encoding="utf-8") as f:
             f.write(f"{datetime.datetime.now().isoformat(timespec='seconds')} "
                     f"[{action}] {type(exc).__name__}: {exc}\n")
     except OSError:
@@ -573,7 +585,7 @@ class Handler(BaseHTTPRequestHandler):
         if path not in ("/api/analyze", "/api/decisions",
                         "/api/auth/register", "/api/auth/login", "/api/auth/logout",
                         "/api/auth/update_name", "/api/auth/change_password",
-                        "/api/auth/recover",
+                        "/api/auth/recover", "/api/auth/recovery_regen",
                         "/api/source/add", "/api/source/preview", "/api/source/import",
                         "/api/source/meta") \
                 and not path.startswith("/api/agent/jobs") \
@@ -637,6 +649,18 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/api/auth/logout":
             self.server.auth.logout(self.headers.get("X-NEXO-Session") or "")
             self._send(200, {"ok": True})
+            return
+        if path == "/api/auth/recovery_regen":
+            try:
+                uid = self.server.auth.me(self.headers.get("X-NEXO-Session") or "")
+                codigo = self.server.auth.issue_recovery(uid)
+            except AuthError as e:
+                self._auth_error(e)
+            except Exception as e:
+                log_internal("recovery_regen", e)
+                self._send(502, {"error": "No fue posible generar el código. Inténtalo de nuevo."})
+            else:
+                self._send(200, {"ok": True, "recovery_code": codigo})
             return
         if path.startswith("/api/admin/users/"):
             parts = path.rsplit("/", 2)

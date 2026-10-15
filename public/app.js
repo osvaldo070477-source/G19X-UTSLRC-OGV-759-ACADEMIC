@@ -1196,6 +1196,17 @@ $("formPass").addEventListener("submit", function(ev){
     }
   }).catch(function(){ sub.disabled=false; setErr($("pfNew"),"pfNewErr","Sin conexión con el servicio."); });
 });
+$("btnRecGen").addEventListener("click", function(){
+  $("pfRecMsg").textContent="";
+  var b=$("btnRecGen"); b.disabled=true;
+  apiPost("auth_recovery_regen", {}).then(function(res){
+    b.disabled=false;
+    if(res.code===200&&res.body.recovery_code){
+      $("pfRecMsg").textContent="Tu código nuevo (solo se muestra una vez): "+res.body.recovery_code;
+      toast("Código generado. Anótalo.");
+    } else toast(res.body.error||"No se pudo generar.");
+  }).catch(function(){ b.disabled=false; toast("Sin conexión."); });
+});
 /* ---------- Administración (solo admin) ---------- */
 var adminResetId=0;
 function renderAdmin(){

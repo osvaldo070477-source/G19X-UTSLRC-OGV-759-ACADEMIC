@@ -29,3 +29,37 @@ jobs:
           php -l public/api.php
           php -l public/index.php
           php -l server/router.php
+  smoke:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+        ports:
+          - 3306:3306
+        options: --health-cmd="mysqladmin ping -h localhost" --health-interval=10s --health-timeout=5s --health-retries=5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.4"
+      - name: Dependencia MySQL
+        run: python -m pip install -r backend/requirements.txt
+      - name: Base de prueba
+        run: |
+          mysql -h 127.0.0.1 -u root -proot -e "CREATE USER IF NOT EXISTS 'nexo_ro'@'%' IDENTIFIED BY 'ro'; CREATE USER IF NOT EXISTS 'nexo_app'@'%' IDENTIFIED BY 'app'; GRANT SELECT ON nexo_source.* TO 'nexo_ro'@'%'; GRANT SELECT, INSERT, UPDATE, DELETE ON nexo_app.* TO 'nexo_app'@'%'; FLUSH PRIVILEGES;"
+          for f in sql/01_schema_source.sql sql/02_schema_app.sql sql/03_seed_source.sql sql/05_agentic.sql sql/06_auth.sql sql/08_usuarios_rol.sql sql/09_carga.sql; do mysql -h 127.0.0.1 -u root -proot < "$f"; done
+          printf 'NEXO_INTERNAL_TOKEN=t\nNEXO_PY_URL=http://127.0.0.1:8001\nNEXO_MYSQL_HOST=127.0.0.1\nNEXO_MYSQL_PORT=3306\nNEXO_RO_USER=nexo_ro\nNEXO_RO_PASSWORD=ro\nNEXO_APP_USER=nexo_app\nNEXO_APP_PASSWORD=app\nNEXO_AI_PROVIDER=stub\n' > .env
+      - name: Humo extremo a extremo
+        run: |
+          python backend/app.py --port 8001 & echo $! > py.pid
+          php -S 127.0.0.1:8000 server/router.php & echo $! > php.pid
+          sleep 4
+          curl -sf http://127.0.0.1:8000/api.php?action=health
+          CSRF=$(curl -s -c jar http://127.0.0.1:8000/api.php?action=auth_csrf | python -c "import sys,json;print(json.load(sys.stdin)['csrf'])")
+          curl -sf -b jar -H "X-CSRF-Token: $CSRF" -H 'Content-Type: application/json' -d '{}' 'http://127.0.0.1:8000/api.php?action=analyze' | grep -o '"indice":[0-9]*'
+          kill $(cat py.pid) $(cat php.pid) || true

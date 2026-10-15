@@ -158,7 +158,8 @@ en MySQL), **Seguridad** (cambio de contraseña verificando la actual) y
   y `sql/07_permisos.sql` (obligatorio para que el acceso funcione).
 - Al registrarte recibes un **código de recuperación** de 12 caracteres
   (guárdalo: solo se muestra una vez). Si olvidas tu clave, úsalo en
-  **Iniciar sesión → ¿Olvidaste tu contraseña?** Como respaldo, un admin
+  **Iniciar sesión → ¿Olvidaste tu contraseña?**; puedes generar uno nuevo
+  desde Mi perfil → Seguridad. Como respaldo, un admin
   puede restablecerla.
 - Alcance local de un operador: no es autenticación empresarial.
 
