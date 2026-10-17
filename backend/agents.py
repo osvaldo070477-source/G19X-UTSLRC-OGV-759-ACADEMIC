@@ -95,7 +95,7 @@ def agent_loop(job, svc, stage, agent_id, system_extra, allowed_tools, final_des
                 ". Herramientas permitidas: " + ", ".join(allowed_tools) +
                 ". " + final_desc}]
     tools_spec = [t for t in openai_tools() if t["function"]["name"] in allowed_tools]
-    seen, repairs, bad, warned = [], 0, 0, False
+    seen, repairs, bad, warned, repeats = [], 0, 0, False, 0
     while True:
         svc["throw_if_cancelled"]()
         svc["check_deadline"]()
@@ -149,9 +149,20 @@ def agent_loop(job, svc, stage, agent_id, system_extra, allowed_tools, final_des
                                                 "ok": False, "error": err})
                     continue
                 key = (name, json.dumps(args, sort_keys=True))
-                if seen and seen[-1] == key and len(seen) >= 2 and seen[-2] == key:
-                    raise JobHalt("fallido", "limite_bucle", "El modelo repite la misma llamada; se detuvo el bucle.")
                 seen.append(key)
+                if seen.count(key) > 1:
+                    # El modelo repite una llamada ya ejecutada: no se vuelve a
+                    # ejecutar; se le exige cerrar con el JSON final. Solo si
+                    # insiste más allá de max_repairs se detiene el bucle.
+                    repeats += 1
+                    if repeats > cfg["max_repairs"]:
+                        raise JobHalt("fallido", "limite_bucle",
+                                      "El modelo repite la misma llamada; se detuvo el bucle.")
+                    history.append({"role": "user",
+                                    "content": "Ya ejecutaste " + name + " con esos argumentos; su "
+                                               "resultado está arriba. NO la repitas. Devuelve AHORA "
+                                               "SOLO el JSON final pedido, sin más llamadas."})
+                    continue
                 try:
                     t0 = time.time()
                     result = execute_tool(name, args, svc["tool_ctx"])

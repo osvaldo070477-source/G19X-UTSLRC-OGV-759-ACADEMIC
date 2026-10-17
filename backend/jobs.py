@@ -156,7 +156,10 @@ class MysqlStore:
             cur = conn.cursor(dictionary=True)
             cur.execute("SELECT id, estado, modo_fuente, proveedor, modelo, es_prueba, run_id, "
                         "codigo_error, creado_en FROM agent_jobs ORDER BY id DESC LIMIT %s", (limit,))
-            return cur.fetchall()
+            rows = cur.fetchall()
+            for r in rows:
+                r["creado_en"] = str(r.get("creado_en"))
+            return rows
         finally:
             conn.close()
 
