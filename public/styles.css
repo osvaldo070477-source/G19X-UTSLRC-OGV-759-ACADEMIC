@@ -107,7 +107,8 @@ main{width:100%;max-width:1440px;margin:0 auto;padding:20px var(--s8) var(--s8);
 input:not([type="checkbox"]):not([type="radio"]),select,textarea{font:inherit;font-size:.95rem;color:var(--ink);
   min-height:46px;padding:.55rem .8rem;border:2px solid var(--line);border-radius:var(--r-ctrl);
   background:var(--field);width:100%}
-input:focus,select:focus,textarea:focus{border-color:var(--teal-d);outline:none}
+input:focus,select:focus,textarea:focus{border-color:var(--teal-d)}
+input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid var(--ring);outline-offset:2px}
 select option{background:var(--card);color:var(--ink)}
 textarea{width:100%;min-height:72px;resize:vertical}
 label{font-weight:600;font-size:.88rem;display:grid;gap:6px;color:var(--ink)}

@@ -152,7 +152,8 @@ function storageOK(){
   try{ localStorage.setItem("__nexo","1"); localStorage.removeItem("__nexo"); return true; }
   catch(e){ return false; }
 }
-function notice(msg){ var n=document.getElementById("noticeBar"); n.textContent=msg; n.hidden=!msg; }
+function notice(msg){ var n=document.getElementById("noticeBar");
+  if(msg){ n.hidden=false; n.textContent=msg; } else { n.textContent=""; n.hidden=true; } }
 function toast(msg){ var t=document.getElementById("toast"); t.textContent=msg; t.hidden=false;
   clearTimeout(t._h); t._h=setTimeout(function(){t.hidden=true;},3200); }
 function esc(s){ return String(s===null||s===undefined?"":s).replace(/[&<>"']/g,
