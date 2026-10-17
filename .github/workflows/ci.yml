@@ -63,4 +63,20 @@ jobs:
           curl -sf http://127.0.0.1:8000/api.php?action=health
           CSRF=$(curl -s -c jar http://127.0.0.1:8000/api.php?action=auth_csrf | python -c "import sys,json;print(json.load(sys.stdin)['csrf'])")
           curl -sf -b jar -H "X-CSRF-Token: $CSRF" -H 'Content-Type: application/json' -d '{}' 'http://127.0.0.1:8000/api.php?action=analyze' | grep -o '"indice":[0-9]*'
+          API=http://127.0.0.1:8000/api.php
+          # Rol operador: recién registrado, puede escribir (200)
+          CO=$(curl -s -c jo -b jo "$API?action=auth_csrf" | python -c "import sys,json;print(json.load(sys.stdin)['csrf'])")
+          curl -sf -c jo -b jo -H "X-CSRF-Token: $CO" -H 'Content-Type: application/json' -d '{"nombre":"Operador Prueba","email":"operador@nexo.test","password":"Operador1234"}' "$API?action=auth_register" > /dev/null
+          test "$(curl -s -o /dev/null -w '%{http_code}' -b jo -H "X-CSRF-Token: $CO" -H 'Content-Type: application/json' -d '{}' "$API?action=analyze")" = "200"
+          # Se asciende a admin y un admin asigna rol lector a la otra cuenta
+          CL=$(curl -s -c jl -b jl "$API?action=auth_csrf" | python -c "import sys,json;print(json.load(sys.stdin)['csrf'])")
+          RL=$(curl -sf -c jl -b jl -H "X-CSRF-Token: $CL" -H 'Content-Type: application/json' -d '{"nombre":"Lector Prueba","email":"lector@nexo.test","password":"Lector1234"}' "$API?action=auth_register")
+          LID=$(printf '%s' "$RL" | python -c "import sys,json;print(json.load(sys.stdin)['user']['id'])")
+          python scripts/crea_admin.py operador@nexo.test
+          curl -sf -b jo -H "X-CSRF-Token: $CO" -H 'Content-Type: application/json' -d '{"rol":"lector"}' "$API?action=admin_rol&id=$LID" > /dev/null
+          # El admin lista usuarios; el lector es rechazado (403) al leer y al escribir
+          curl -sf -b jo "$API?action=admin_users" | grep -o '"total":[0-9]*'
+          test "$(curl -s -o /dev/null -w '%{http_code}' -b jl "$API?action=admin_users")" = "403"
+          test "$(curl -s -o /dev/null -w '%{http_code}' -b jl -H "X-CSRF-Token: $CL" -H 'Content-Type: application/json' -d '{}' "$API?action=analyze")" = "403"
+          echo "Roles OK: operador escribe, admin lista, lector 403 en lectura y escritura."
           kill $(cat py.pid) $(cat php.pid) || true
