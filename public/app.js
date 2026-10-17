@@ -787,6 +787,7 @@ function resumenError(job){
 function paintAgentJob(){
   var job=agState.job;
   if(!job) return;
+  var comentarioPrev=($("agRevComment")||{}).value||"";
   $("agJobId").textContent="#"+job.id+" · "+job.estado+(job.stub?" · proveedor de prueba":"");
   $("agStages").innerHTML=AG_STAGES.map(function(st){
     var s=stageState(job,st[0]);
@@ -808,6 +809,8 @@ function paintAgentJob(){
     $("agApprove").addEventListener("click", function(){ agentReview(job.id,"approve"); });
     $("agReject").addEventListener("click", function(){ agentReview(job.id,"reject"); });
   });
+  var nc=$("agRevComment");
+  if(nc&&comentarioPrev) nc.value=comentarioPrev;
   // Determinista frente a IA
   var det=job.determinista||null, recs=job.recomendaciones||job.recomendaciones_draft||[];
   var html="";
@@ -830,7 +833,7 @@ function paintAgentJob(){
   $("agUsage").textContent=u.llamadas_modelo?("Modelo: "+u.llamadas_modelo+" llamadas · "+(u.total||0)+" tokens reportados"+(job.stub?" (prueba, sin costo)":"")+"."):"";
   // Sondeo
   clearInterval(agState.timer);
-  if(job.estado==="en_ejecucion"||job.estado==="esperando_revision"){
+  if(job.estado==="en_ejecucion"){
     agState.timer=setInterval(function(){ loadAgentJob(job.id); }, 2500);
   }
 }
