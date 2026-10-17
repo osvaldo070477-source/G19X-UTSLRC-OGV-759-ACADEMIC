@@ -81,7 +81,7 @@ sin `--demo` intenta MySQL según `.env` y **falla con error visible** si no hay
 | `backend/` | `app.py` (servicio), `rules.py` (reglas), `sample.py` (muestra), `providers.py` (IA), `agent_tools.py` (9 herramientas), `agents.py` (orquestador), `jobs.py` (trabajos), `requirements.txt` (solo MySQL) |
 | `sql/` | Esquemas y migraciones idempotentes en orden: `01`–`03` (base), `05_agentic.sql`, `06_auth.sql`, `08_usuarios_rol.sql`, `09_carga.sql`, `10_admin_audit.sql` y `07_permisos.sql` al final (permisos sobre tablas ya creadas; sin borrar datos) |
 | `scripts/` | `gen_env.py` (secretos, conserva lo existente), `check.py` (verificación) |
-| `tests/` | `test_rules.py`, `test_agents.py`, `test_auth.py` (proveedor de prueba; cero llamadas reales) |
+| `tests/` | `test_rules.py`, `test_agents.py`, `test_auth.py`, `test_carga.py` (sin red ni MySQL; proveedor de prueba) |
 | `docs/` | `PRD.md`, `arquitectura.md`, `agentes.md`, `backlog.md` |
 
 ## 5. Agentes y proveedor de IA
@@ -193,7 +193,7 @@ en MySQL), **Seguridad** (cambio de contraseña verificando la actual) y
 - **Correo:** `usuario@dominio.extensión`; vacíos excluidos.
 - Índice = `redondear((comprobaciones − incidencias) / comprobaciones × 100)`; sin comprobaciones = «Sin evaluar».
 - `row_id` (técnica, única) ≠ `id` (negocio, con duplicado intencional `CLI-004`).
-- Verificación: `python tests/test_rules.py`, `python tests/test_agents.py`, `python tests/test_auth.py`, `python scripts/check.py` y `python scripts/check_ui.py`.
+- Verificación: `python tests/test_rules.py`, `python tests/test_agents.py`, `python tests/test_auth.py`, `python tests/test_carga.py`, `python scripts/check.py` y `python scripts/check_ui.py`.
 
 ## 9. Seguridad local
 
