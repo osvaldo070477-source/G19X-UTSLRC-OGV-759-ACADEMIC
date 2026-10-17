@@ -1,5 +1,5 @@
 """Verificación estática de la interfaz (sin navegador).
-Comprueba que cada id usado por public/app.js exista en public/index.html,
+Comprueba que cada id usado por public/js/*.js exista en public/index.html,
 que cada data-tab tenga su sección y que cada data-goto apunte a una
 sección válida. Uso:  python scripts/check_ui.py
 """
@@ -9,7 +9,9 @@ import sys
 
 BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 html = open(os.path.join(BASE, "public", "index.html"), encoding="utf-8").read()
-js = open(os.path.join(BASE, "public", "app.js"), encoding="utf-8").read()
+_JS_DIR = os.path.join(BASE, "public", "js")
+js = "".join(open(os.path.join(_JS_DIR, f), encoding="utf-8").read()
+             for f in sorted(os.listdir(_JS_DIR)) if f.endswith(".js"))
 css = open(os.path.join(BASE, "public", "styles.css"), encoding="utf-8").read()
 
 fails = []

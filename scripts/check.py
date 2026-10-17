@@ -43,7 +43,7 @@ for k, v in esperado.items():
     print(f"  [{marca}] {k}: {real} (esperado {v})")
 
 print("== Equivalencia JS ==")
-print("  La equivalencia con public/app.js se verifica abriendo la demo,")
+print("  La equivalencia con public/js/ (módulos de la interfaz) se verifica abriendo la demo,")
 print("  ejecutando el análisis y comparando 208/21/8/90 (ver README).")
 
 print("== Herramientas agentic ==")

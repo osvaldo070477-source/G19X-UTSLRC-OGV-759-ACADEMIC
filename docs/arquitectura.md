@@ -2,7 +2,9 @@
 
 ## Piezas y por qué existen
 - **`public/` (lo que ves):** `index.html` (estructura), `styles.css` (diseño azul profundo + turquesa),
-  `app.js` (interacción + motor de reglas en JS para el modo demostración). `api.php` es la puerta:
+  `js/` (interacción + motor de reglas en JS para el modo demostración, en módulos por pantalla:
+  `base`, `observatorio`, `catalogo`, `calidad`, `decisiones`, `bitacora`, `agentes`, `auth`, `perfil`,
+  `admin`, `carga`, `paginador`, `arranque`). `api.php` es la puerta:
   recibe las peticiones del navegador y las reenvía al servicio Python con un token secreto.
   Existe para que el navegador nunca vea contraseñas ni hable directo con la base de datos.
 - **`server/router.php`:** enrutador para el servidor integrado de PHP (`php -S`). Sirve solo archivos
@@ -10,7 +12,7 @@
 - **`backend/app.py`:** servicio Python con biblioteca estándar. Expone `/api/health`, `/api/analyze`,
   `/api/runs`, `/api/decisions`, `/api/catalog`. Existe porque concentra la lógica y el acceso a datos.
 - **`backend/rules.py`:** motor de reglas deterministas (obligatoriedad, unicidad, correo). Existe para que
-  los criterios sean explícitos, auditables e idénticos a los de `app.js`.
+  los criterios sean explícitos, auditables e idénticos a los de `public/js` (demo).
 - **`backend/sample.py`:** muestra sintética + metadatos (responsables, dominios). Existe para demostrar
   sin datos reales.
 - **`sql/`:** `nexo_source` (datos) y `nexo_app` (resultados). Dos bases y dos cuentas separan

@@ -1,6 +1,6 @@
 """Motor de reglas deterministas de NEXO.
 
-Reglas (idénticas en Python y JavaScript — ver public/app.js):
+Reglas (idénticas en Python y JavaScript — ver public/js/base.js):
   1. Obligatoriedad (required): nulo, ausente o solo espacios => incidencia.
      El número 0 NO cuenta como vacío. Booleanos nunca vacíos.
   2. Unicidad (unique): claves de negocio duplicadas. Se marca TODA fila

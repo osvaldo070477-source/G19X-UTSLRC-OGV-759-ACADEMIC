@@ -67,7 +67,7 @@ sin `--demo` intenta MySQL según `.env` y **falla con error visible** si no hay
 
 | Ruta | Qué es |
 |------|--------|
-| `public/` | `index.html`, `styles.css`, `app.js`, `api.php` (puerta a Python), `index.php` |
+| `public/` | `index.html`, `styles.css`, `js/` (módulos por pantalla: `base`, `catalogo`, `calidad`, `agentes`, `perfil`, `admin`, …), `api.php` (puerta a Python), `index.php` |
 | `server/router.php` | Enrutador del servidor PHP (solo sirve `public/`) |
 | `backend/` | `app.py` (servicio), `rules.py` (reglas), `sample.py` (muestra), `providers.py` (IA), `agent_tools.py` (9 herramientas), `agents.py` (orquestador), `jobs.py` (trabajos), `requirements.txt` (solo MySQL) |
 | `sql/` | Esquemas y migraciones idempotentes en orden: `01`–`03` (base), `05_agentic.sql`, `06_auth.sql`, `07_permisos.sql`, `08_usuarios_rol.sql`, `09_carga.sql` y `10_admin_audit.sql` (sin borrar datos) |
