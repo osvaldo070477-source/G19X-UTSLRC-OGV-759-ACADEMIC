@@ -205,9 +205,9 @@ App local de un solo operador, sin autenticación empresarial.
 
 ## 10. Estado de verificación
 
-Suites (2026-10-16): `tests/test_rules.py` (**OK**),
+Suites (2026-10-17): `tests/test_rules.py` (**OK**),
 `tests/test_agents.py` (**20/20**, con proveedor de prueba),
-`tests/test_auth.py` (**21/21**), `tests/test_carga.py` (**7/7**),
+`tests/test_auth.py` (**24/24**), `tests/test_carga.py` (**7/7**),
 `scripts/check.py` (**OK**) y `scripts/check_ui.py` (**OK**). El mismo juego
 corre en CI (`.github/workflows/ci.yml`) en cada push, con un trabajo de humo
 que levanta MySQL + PHP + Python y ejecuta un análisis de punta a punta.
