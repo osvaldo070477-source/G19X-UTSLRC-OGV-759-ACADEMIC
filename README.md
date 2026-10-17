@@ -1,8 +1,14 @@
 # NEXO · Arquitectura Agentic para Data Governance (MVP)
 
+[![CI NEXO](https://github.com/osvaldo070477-source/G19X-UTSLRC-OGV-759-ACADEMIC/actions/workflows/ci.yml/badge.svg)](https://github.com/osvaldo070477-source/G19X-UTSLRC-OGV-759-ACADEMIC/actions/workflows/ci.yml)
+
 Recorrido de gobierno de datos con **reglas deterministas verificables** y
 **agentes reales**: el modelo decide qué herramientas autorizadas usar;
 catálogo → análisis → evidencias → recomendaciones → decisiones → bitácora.
+
+**Autor:** osvaldo070477-source (`Osvaldo070477@gmail.com`) ·
+**Repositorio:** `osvaldo070477-source/G19X-UTSLRC-OGV-759-ACADEMIC` ·
+Proyecto académico (UTSLRC) · Licencia [MIT](LICENSE).
 
 ## 1. Demostración inmediata (sin instalar nada)
 
