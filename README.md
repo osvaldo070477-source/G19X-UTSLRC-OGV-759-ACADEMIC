@@ -8,7 +8,7 @@ catálogo → análisis → evidencias → recomendaciones → decisiones → bi
 
 **Autor:** osvaldo070477-source (`Osvaldo070477@gmail.com`) ·
 **Repositorio:** `osvaldo070477-source/G19X-UTSLRC-OGV-759-ACADEMIC` ·
-Proyecto académico (UTSLRC) · Licencia [MIT](LICENSE).
+Proyecto académico (UTSLRC) · Licencia [MIT](LICENSE) · [Historial de cambios](CHANGELOG.md).
 
 ## 1. Demostración inmediata (sin instalar nada)
 
