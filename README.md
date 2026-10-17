@@ -236,3 +236,18 @@ Ojo: el servicio Python debe iniciarse con `.\.venv\Scripts\python.exe`
 (donde está `mysql-connector-python`).
 Nota: un 403 aislado tras login bajo ráfagas de PowerShell no se reprodujo en
 uso normal; el CSRF rechaza correctamente peticiones sin sesión.
+
+## 11. Uso de asistentes de IA
+
+El proyecto se desarrolló con el apoyo de un **asistente de IA para programar**
+(agente de código en el editor). Se declara para dejar constancia, como
+recomienda la rúbrica del proyecto; no se penaliza y conviene ser transparente.
+
+- El asistente ayudó a **escribir, revisar y documentar** código, y a ejecutar
+  pruebas; **los requisitos, las decisiones de arquitectura y la validación
+  final son del autor**.
+- Nunca se compartieron credenciales ni datos reales con el asistente: las
+  claves viven solo en el `.env` local (fuera del repositorio, ver §9).
+- Es distinto del proveedor de IA que la **aplicación** usa en tiempo de
+  ejecución (Centro de agentes, §5), que está sujeto a reglas estrictas y a
+  revisión humana antes de cualquier escritura.
