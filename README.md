@@ -58,14 +58,17 @@ sin `--demo` intenta MySQL según `.env` y **falla con error visible** si no hay
    -- sql/04_users_template.sql es plantilla: edita las contraseñas antes de ejecutarla
    source sql/05_agentic.sql
    source sql/06_auth.sql
-   source sql/07_permisos.sql
    source sql/08_usuarios_rol.sql
    source sql/09_carga.sql
    source sql/10_admin_audit.sql
+   source sql/07_permisos.sql
    ```
-   El paso `07_permisos.sql` es obligatorio: sin él, el acceso falla con error
-   1142 porque la cuenta de aplicación no puede actualizar intentos de acceso
-   ni sesiones. Si `08` marca error 1060 (columna duplicada), ignóralo.
+   `07_permisos.sql` va al final: concede permisos a `nexo_app` sobre tablas que
+   crean `09` y `10` (`source_audit`, `asset_meta`, `admin_audit`), y MySQL
+   rechaza un `GRANT` sobre tablas inexistentes (error 1146). Aplicarlo es
+   obligatorio: sin él, el acceso falla con error 1142 porque la cuenta de
+   aplicación no puede actualizar intentos de acceso ni sesiones. Si `08`
+   marca error 1060 (columna duplicada), ignóralo.
 4. Copia `.env.example` o genera `.env` con `python scripts/gen_env.py` y anota las contraseñas reales.
 5. Inicia Python **sin** `--demo` y PHP como en el punto 2. Verás **«Modo conectado — PHP · Python · MySQL»**.
 
@@ -76,7 +79,7 @@ sin `--demo` intenta MySQL según `.env` y **falla con error visible** si no hay
 | `public/` | `index.html`, `styles.css`, `js/` (módulos por pantalla: `base`, `catalogo`, `calidad`, `agentes`, `perfil`, `admin`, …), `api.php` (puerta a Python), `index.php` |
 | `server/router.php` | Enrutador del servidor PHP (solo sirve `public/`) |
 | `backend/` | `app.py` (servicio), `rules.py` (reglas), `sample.py` (muestra), `providers.py` (IA), `agent_tools.py` (9 herramientas), `agents.py` (orquestador), `jobs.py` (trabajos), `requirements.txt` (solo MySQL) |
-| `sql/` | Esquemas y migraciones idempotentes en orden: `01`–`03` (base), `05_agentic.sql`, `06_auth.sql`, `07_permisos.sql`, `08_usuarios_rol.sql`, `09_carga.sql` y `10_admin_audit.sql` (sin borrar datos) |
+| `sql/` | Esquemas y migraciones idempotentes en orden: `01`–`03` (base), `05_agentic.sql`, `06_auth.sql`, `08_usuarios_rol.sql`, `09_carga.sql`, `10_admin_audit.sql` y `07_permisos.sql` al final (permisos sobre tablas ya creadas; sin borrar datos) |
 | `scripts/` | `gen_env.py` (secretos, conserva lo existente), `check.py` (verificación) |
 | `tests/` | `test_rules.py`, `test_agents.py`, `test_auth.py` (proveedor de prueba; cero llamadas reales) |
 | `docs/` | `PRD.md`, `arquitectura.md`, `agentes.md`, `backlog.md` |
@@ -170,7 +173,7 @@ en MySQL), **Seguridad** (cambio de contraseña verificando la actual) y
   **Iniciar sesión → ¿Olvidaste tu contraseña?**; puedes generar uno nuevo
   desde Mi perfil → Seguridad. Como respaldo, un admin
   puede restablecerla.
-- Alcance local de un operador: no es autenticación empresarial.
+- Alcance local de un equipo pequeño: no es autenticación empresarial.
 
 ## 7b. Carga de datos (requiere modo conectado y sesión)
 

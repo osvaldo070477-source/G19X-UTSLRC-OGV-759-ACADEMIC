@@ -1,6 +1,9 @@
-"""Autenticación local de NEXO (un operador, sin autenticación empresarial).
+"""Autenticación local de NEXO (equipo pequeño con roles internos).
 
 - Registro e inicio de sesión con validaciones en servidor.
+- Roles: `operador` (por defecto), `lector` (solo lectura) y `admin`
+  (administración y auditoría); el primer admin se asigna con
+  `scripts/crea_admin.py`, y un admin no puede cambiar su propio rol.
 - Contraseñas con PBKDF2-HMAC-SHA256 + sal aleatoria (biblioteca estándar).
 - Bloqueo temporal tras 5 intentos fallidos; sesiones de 8 h.
 - Los mensajes de inicio de sesión son genéricos para no revelar
