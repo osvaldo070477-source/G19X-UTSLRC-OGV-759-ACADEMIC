@@ -229,6 +229,28 @@ class TestAdmin(unittest.TestCase):
             s.admin_rol(tu, uid, "admin")
         self.assertEqual(c2.exception.code, "no_autorizado")
 
+    def test_admin_list_paginado(self):
+        s, ta, tu, uid = self.admin_svc()
+        p = s.admin_list(ta, limit=1, offset=0)
+        self.assertEqual(len(p["items"]), 1)
+        self.assertEqual(p["total"], 2)
+        self.assertEqual(s.admin_list(ta, limit=5, offset=5)["items"], [])
+
+    def test_rol_a_usuario_inexistente(self):
+        s, ta, tu, uid = self.admin_svc()
+        with self.assertRaises(AuthError) as c:
+            s.admin_rol(ta, 99999, "lector")
+        self.assertEqual(c.exception.code, "datos_invalidos")
+
+    def test_promover_a_admin_habilita_admin(self):
+        s, ta, tu, uid = self.admin_svc()
+        self.assertTrue(s.admin_rol(ta, uid, "admin"))
+        self.assertEqual(s.store.get_user(uid)["rol"], "admin")
+        # la cuenta ascendida ya puede usar funciones de administración
+        self.assertEqual(s.admin_list(tu)["total"], 2)
+        self.assertTrue(s.admin_rol(ta, uid, "operador"))
+        self.assertEqual(s.store.get_user(uid)["rol"], "operador")
+
     def test_auditoria_admin(self):
         s, ta, tu, uid = self.admin_svc()
         s.admin_estado(ta, uid, "desactivada")
