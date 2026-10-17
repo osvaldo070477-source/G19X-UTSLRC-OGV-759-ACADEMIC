@@ -15,7 +15,10 @@ Demostrar el recorrido completo de gobierno de datos (conocer → verificar → 
 6. Conservar ejecuciones en bitácora y exportarlas en JSON.
 
 ## 4. Usuarios
-- **Operador/a de datos (estudiante):** ejecuta análisis, revisa hallazgos y registra decisiones. Aplicación local de un solo operador; no incluye autenticación empresarial.
+- **Operador/a de datos (estudiante):** ejecuta análisis, revisa hallazgos, carga datos y registra decisiones.
+- **Lector/a:** consulta resultados autorizados; el servidor rechaza sus escrituras (403).
+- **Administrador/a:** gestiona cuentas (activar/desactivar, desbloquear, restablecer claves, cambiar roles) y edita la ficha de los activos; cada acción queda auditada.
+- Aplicación local de un equipo pequeño, con autenticación propia y roles básicos; sin SSO ni autenticación empresarial.
 
 ## 5. Alcance
 - Tres modos base: A (demostración sin instalaciones), B (PHP + Python sin MySQL), C (PHP + Python + MySQL).
