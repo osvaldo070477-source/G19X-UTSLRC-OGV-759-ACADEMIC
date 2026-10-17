@@ -24,9 +24,9 @@ Demostrar el recorrido completo de gobierno de datos (conocer → verificar → 
 - Decisiones sobre la ejecución más reciente; lectura de anteriores.
 
 ## 6. Exclusiones (lo que NEXO NO hace)
-- No corrige datos automáticamente; aceptar no cambia la fuente ni el índice.
-- No usa IA autónoma: las revisiones son reglas deterministas (la arquitectura agentic es visión futura).
-- No trae autenticación multiusuario ni roles empresariales.
+- No corrige datos automáticamente; aceptar una recomendación no cambia la fuente ni el índice.
+- La IA no calcula ni escribe: el modelo solo elige herramientas autorizadas y propone; el motor determinista calcula toda puntuación y ninguna escritura ocurre sin aprobación humana. No hay acciones autónomas.
+- Autenticación local de un solo equipo: sin SSO, sin jerarquías organizacionales ni roles empresariales.
 - Sin entrevistas con empresas, ahorros medidos ni validaciones externas (proyecto académico).
 
 ## 7. Requisitos funcionales
@@ -82,13 +82,14 @@ Navegador → PHP (`public/api.php`) → servicio Python (`backend/app.py`) → 
 
 ## 13. Riesgos y limitaciones
 - Sin MySQL instalado solo funcionan A y B (historial en memoria).
-- Un solo operador local; sin control de accesos real.
+- Alcance local de un equipo: autenticación propia con roles básicos (operador, lector, admin) y auditoría, sin integración empresarial.
 - Reglas fijas: no detectan problemas semánticos complejos.
 - Límite de 10 000 filas por tabla en esta versión.
 
 ## 14. Backlog por incrementos
 - **Inc. 1 (MVP base):** recorrido completo + 3 modos + docs.
-- **Inc. 2 (agentic, implementado):** proveedor desacoplado (real OpenAI-compatible + prueba), 3 agentes + orquestador, trabajos en segundo plano, revisión humana, persistencia agentic, Centro de agentes.
-- **Inc. 3:** más reglas (rangos, fechas, referencias entre tablas), paginación, importación CSV.
-- **Inc. 4:** operadores y roles básicos, copias de seguridad de `nexo_app`.
+- **Inc. 2 (agentic, implementado):** proveedor desacoplado (real OpenAI-compatible + prueba), 3 agentes + orquestador, trabajos en segundo plano, revisión humana, persistencia agentic, Centro de agentes. Corrida real verificada contra un proveedor externo (ver README §10).
+- **Inc. 3 (implementado):** carga gobernada (formulario + importación CSV con vista previa y auditoría), edición de metadatos y paginación.
+- **Inc. 4 (implementado):** usuarios con roles (operador, lector, admin), administración con auditoría de acciones y recuperación de contraseña con código de un solo uso.
+- **Inc. 5 (pendiente):** más reglas (rangos, fechas, referencias entre tablas), pruebas de equivalencia Py↔JS y copias de seguridad documentadas de `nexo_app`.
 - **Visión:** planificador proactivo y más herramientas de solo lectura, siempre con aprobación humana antes de escribir.

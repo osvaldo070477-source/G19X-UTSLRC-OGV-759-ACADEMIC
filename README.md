@@ -54,6 +54,8 @@ sin `--demo` intenta MySQL según `.env` y **falla con error visible** si no hay
    source sql/06_auth.sql
    source sql/07_permisos.sql
    source sql/08_usuarios_rol.sql
+   source sql/09_carga.sql
+   source sql/10_admin_audit.sql
    ```
    El paso `07_permisos.sql` es obligatorio: sin él, el acceso falla con error
    1142 porque la cuenta de aplicación no puede actualizar intentos de acceso
@@ -68,7 +70,7 @@ sin `--demo` intenta MySQL según `.env` y **falla con error visible** si no hay
 | `public/` | `index.html`, `styles.css`, `app.js`, `api.php` (puerta a Python), `index.php` |
 | `server/router.php` | Enrutador del servidor PHP (solo sirve `public/`) |
 | `backend/` | `app.py` (servicio), `rules.py` (reglas), `sample.py` (muestra), `providers.py` (IA), `agent_tools.py` (9 herramientas), `agents.py` (orquestador), `jobs.py` (trabajos), `requirements.txt` (solo MySQL) |
-| `sql/` | Esquemas, semilla idempotente, plantilla de usuarios, `05_agentic.sql` y `06_auth.sql` (migraciones sin borrar nada) |
+| `sql/` | Esquemas y migraciones idempotentes en orden: `01`–`03` (base), `05_agentic.sql`, `06_auth.sql`, `07_permisos.sql`, `08_usuarios_rol.sql`, `09_carga.sql` y `10_admin_audit.sql` (sin borrar datos) |
 | `scripts/` | `gen_env.py` (secretos, conserva lo existente), `check.py` (verificación) |
 | `tests/` | `test_rules.py`, `test_agents.py`, `test_auth.py` (proveedor de prueba; cero llamadas reales) |
 | `docs/` | `PRD.md`, `arquitectura.md`, `agentes.md`, `backlog.md` |
@@ -91,8 +93,8 @@ llevan 🤖 IA; las cifras verificadas llevan ✓.
   4. Reinicia el servicio Python y abre el Centro de agentes: debe decir «IA habilitada».
 - **Costos:** la API del proveedor normalmente es de pago por uso y puede
   generar cargos; revisa su página de precios antes de activar. El proveedor
-  de prueba y la demo no cuestan nada. No se hizo ninguna llamada de pago
-  en este proyecto.
+  de prueba y la demo no cuestan nada. Las corridas reales de este proyecto
+  usaron la **cuota gratuita** del proveedor (ver §10): sin costo.
 - **Cuota gratuita (verificado oct-2026):** Gemini gratis permite ~20
   peticiones/día por modelo (un trabajo agentic usa ~7-10); si se agota,
   el trabajo registra `proveedor_server` con el tiempo de espera y puedes
@@ -154,8 +156,9 @@ en MySQL), **Seguridad** (cambio de contraseña verificando la actual) y
   propia pestaña.
   El primer admin se asigna en la PC con
   `.\.venv\Scripts\python.exe scripts/crea_admin.py correo` (cuenta ya registrada).
-- Sin MySQL todo es temporal (memoria); con MySQL aplica `sql/06_auth.sql`
-  y `sql/07_permisos.sql` (obligatorio para que el acceso funcione).
+- Sin MySQL todo es temporal (memoria); con MySQL aplica `sql/06_auth.sql`,
+  `sql/07_permisos.sql` (obligatorio para que el acceso funcione),
+  `sql/08_usuarios_rol.sql`, `sql/09_carga.sql` y `sql/10_admin_audit.sql`.
 - Al registrarte recibes un **código de recuperación** de 12 caracteres
   (guárdalo: solo se muestra una vez). Si olvidas tu clave, úsalo en
   **Iniciar sesión → ¿Olvidaste tu contraseña?**; puedes generar uno nuevo
@@ -193,23 +196,43 @@ App local de un solo operador, sin autenticación empresarial.
 
 ## 10. Estado de verificación
 
-Ejecutado aquí (2026-09-21): `tests/test_rules.py` (15/15 OK),
-`tests/test_agents.py` (20/20 OK, todo con proveedor de prueba),
-`tests/test_auth.py` (14/14 OK), `scripts/check.py` (OK), `scripts/check_ui.py` (OK), flujo agentic vivo PHP→Python con stub
-(inicio, revisión, aprobación, cancelación, reintento, rechazos 409;
-trabajo #1 completado con 208/21/90 y 8 recomendaciones).
-**Cero llamadas a IA real: no hay clave configurada.**
-Flujo de usuarios vivo: registro, duplicado (400), login erróneo (401),
-bloqueo tras 5 fallos (423), sesión que sobrevive, decisión firmada con el
-nombre, invitado sin firma y logout (401 posterior).
-MySQL 8.0 local verificado: usuarios limitados, semilla 20/14/10,
-análisis real 208/21/90, decisión que sobrevive al reinicio del servicio.
+Suites (2026-10-16): `tests/test_rules.py` (**OK**),
+`tests/test_agents.py` (**20/20**, con proveedor de prueba),
+`tests/test_auth.py` (**21/21**), `tests/test_carga.py` (**7/7**),
+`scripts/check.py` (**OK**) y `scripts/check_ui.py` (**OK**). El mismo juego
+corre en CI (`.github/workflows/ci.yml`) en cada push, con un trabajo de humo
+que levanta MySQL + PHP + Python y ejecuta un análisis de punta a punta.
+
+Flujo agentic vivo PHP→Python con proveedor de prueba (stub): inicio, revisión,
+aprobación, cancelación, reintento y rechazos 409; trabajo completado con
+208/21/90 y 8 recomendaciones.
+
+**Corrida real con IA (2026-10-16):** desde el Centro de agentes, trabajo **#13**
+sobre la fuente MySQL (`origen`), proveedor `openai` (endpoint Gemini
+OpenAI-compatible), modelo `gemini-3.5-flash`, `es_prueba = 0`.
+
+| Dato | Valor |
+|------|-------|
+| Estado | **completado** en ~82 s · 9 llamadas al modelo · 9 herramientas |
+| Consumo | 5 264 tokens de entrada + 1 275 de salida = **10 577** |
+| Motor determinista (fuente de verdad) | 208 comprobaciones · 21 incidencias · índice **90%** |
+| Revisiones humanas | 2 (calidad y recomendaciones), **aprobadas** |
+| Recomendaciones | **8 válidas** (5 Alta, 3 Media) persistidas en `nexo_app.recommendations` (job_id = 13) |
+
+El modelo eligió solo herramientas autorizadas y **no inventó conteos ni
+evidencias**; las recomendaciones citaron hallazgos reales y el motor siguió
+siendo la fuente de toda puntuación.
+
+Flujo de usuarios vivo: registro, duplicado (400), login erróneo (401), bloqueo
+tras 5 fallos (423), sesión que sobrevive, decisión firmada con el nombre,
+invitado sin firma y logout (401 posterior). Perfil verificado (registro→perfil→
+cambio de nombre→cambio de clave→login con la nueva→decisión→actividad propia→
+logout), con fallo de BD sin éxito falso. Recuperación de contraseña verificada
+en vivo: registro → generar código nuevo → recover → login con la clave cambiada.
+
+MySQL 8.0 local verificado: cuentas con permisos mínimos, semilla 20/14/10,
+análisis real 208/21/90 y decisión que sobrevive al reinicio del servicio.
 Ojo: el servicio Python debe iniciarse con `.\.venv\Scripts\python.exe`
-(donde está `mysql-connector-python`), y se corrigió la fecha del detalle.
-Perfil verificado vivo (2026-10-08): registro→perfil→cambio de nombre→cambio
-de clave→login con nueva→decisión→actividad propia (1/1)→logout→duplicado 400→
-clave errónea 401→login tras reinicio; fallo de BD sin éxito falso.
+(donde está `mysql-connector-python`).
 Nota: un 403 aislado tras login bajo ráfagas de PowerShell no se reprodujo en
 uso normal; el CSRF rechaza correctamente peticiones sin sesión.
-Pendiente (requiere tu clave y autorización): una llamada real al proveedor
-desde el Centro de agentes.
