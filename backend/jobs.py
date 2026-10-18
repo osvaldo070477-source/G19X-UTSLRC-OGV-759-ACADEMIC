@@ -129,11 +129,15 @@ class MysqlStore:
                 return None
             cur.execute("SELECT etapa, evento, resumen, creado_en FROM agent_steps WHERE job_id=%s ORDER BY id", (job_id,))
             etapas = cur.fetchall()
+            for e in etapas:
+                e["creado_en"] = str(e.get("creado_en") or "")
             cur.execute("SELECT agente, herramienta, argumentos_json, ok, resumen, ms FROM tool_calls "
                         "WHERE job_id=%s ORDER BY id", (job_id,))
             herramientas = cur.fetchall()
             cur.execute("SELECT id, motivo, estado, comentario, creado_en FROM reviews WHERE job_id=%s ORDER BY id", (job_id,))
             revisiones = cur.fetchall()
+            for r in revisiones:
+                r["creado_en"] = str(r.get("creado_en") or "")
             cur.execute("SELECT tabla, columna, regla, problema, accion, prioridad, justificacion, "
                         "limitaciones, revision_humana, estado FROM recommendations WHERE job_id=%s ORDER BY id", (job_id,))
             recs = cur.fetchall()

@@ -35,6 +35,9 @@ Primera entrega académica: MVP local de gobierno de datos con centro de agentes
   campos de formulario y barra de avisos como región `status`.
 
 ### Corregido
+- Detalle del trabajo del agente en modo MySQL: las fechas anidadas no se
+  serializaban y cerraban la conexión, mostrando un falso «no se pudo contactar
+  al servicio Python» al pulsar **Ver**.
 - Listado de trabajos del agente y bucle del modelo en corridas reales.
 - Permisos de MySQL (evita el error 1142) y mensajes de error sin filtrar detalles internos.
 - Paginación idempotente y varios ajustes de la interfaz.

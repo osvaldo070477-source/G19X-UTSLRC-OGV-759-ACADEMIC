@@ -353,7 +353,9 @@ class Handler(BaseHTTPRequestHandler):
         pass
 
     def _send(self, code, obj):
-        body = json.dumps(obj, ensure_ascii=False).encode("utf-8")
+        # default=str: un valor no serializable (p. ej. fecha de MySQL) nunca debe
+        # tumbar la conexión y disfrazarse de "servicio Python no disponible".
+        body = json.dumps(obj, ensure_ascii=False, default=str).encode("utf-8")
         self.send_response(code)
         self.send_header("Content-Type", "application/json; charset=utf-8")
         self.send_header("Content-Length", str(len(body)))
