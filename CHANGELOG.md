@@ -25,7 +25,7 @@ Primera entrega académica: MVP local de gobierno de datos con centro de agentes
 - Arranque en un clic de los servicios locales (`iniciar-nexo.bat`).
 - Integración continua: pruebas de Python y humo de extremo a extremo
   (PHP → Python → MySQL) con comprobación de roles.
-- Documentación: PRD, arquitectura, agentes, backlog, guion de demostración y lista de capturas.
+- Documentación: PRD, arquitectura, agentes, backlog y lista de capturas.
 - Licencia MIT.
 
 ### Cambiado
