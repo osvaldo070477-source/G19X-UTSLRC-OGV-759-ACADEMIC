@@ -165,5 +165,5 @@ def analyze_tables(tables):
         "indice": quality_index(total_checks, total_issues),
         "hallazgos": findings,
         "filas_afectadas": len(affected),
-        "total_registros": sum(len(r) for r in tables.values()),
+        "total_registros": sum(len(rows) for t, rows in tables.items() if t in RULE_CONFIG),
     }

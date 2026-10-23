@@ -21,6 +21,8 @@ jobs:
           python tests/test_agents.py
           python tests/test_auth.py
           python tests/test_carga.py
+      - name: Equivalencia Python-JavaScript
+        run: python tests/test_equivalencia.py --require-node
       - name: Comprobadores
         run: |
           python scripts/check.py

@@ -25,10 +25,17 @@ Primera entrega académica: MVP local de gobierno de datos con centro de agentes
 - Arranque en un clic de los servicios locales (`iniciar-nexo.bat`).
 - Integración continua: pruebas de Python y humo de extremo a extremo
   (PHP → Python → MySQL) con comprobación de roles.
+- Documento de MVP (`docs/MVP.md`): alcance, recorrido de la demostración y exclusiones.
+- Pruebas de equivalencia Python/JavaScript del motor de reglas
+  (`tests/test_equivalencia.py`), ejecutadas en CI.
 - Documentación: PRD, arquitectura, agentes, backlog y lista de capturas.
 - Licencia MIT.
 
 ### Cambiado
+- README: §9 describe el equipo pequeño con roles, §5 usa el timeout real (180)
+  y §4 lista toda la documentación (incluidos `MVP.md` y `capturas.md`).
+- `scripts/gen_env.py` genera `NEXO_AI_TIMEOUT_S=180`, igual que `.env.example`
+  y el valor por defecto del código.
 - Interfaz dividida en módulos por pantalla (`public/js/`).
 - Sistema visual único con variables CSS, iconos SVG (sin emojis) y estados vacíos con acción.
 - Accesibilidad: enlace «Saltar al contenido» con foco real, anillo de foco visible en
