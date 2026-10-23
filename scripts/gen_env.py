@@ -11,7 +11,7 @@ AI_DEFAULTS = {
     "NEXO_AI_MODEL": "gpt-4o-mini",
     "NEXO_AI_BASE_URL": "https://api.openai.com/v1",
     "NEXO_AI_API_KEY": "",
-    "NEXO_AI_TIMEOUT_S": "60",
+    "NEXO_AI_TIMEOUT_S": "180",
     "NEXO_AI_MAX_STEPS": "10",
     "NEXO_AI_MAX_TOOL_CALLS": "20",
     "NEXO_AI_MAX_RETRIES": "2",

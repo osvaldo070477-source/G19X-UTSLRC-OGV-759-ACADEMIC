@@ -81,8 +81,8 @@ sin `--demo` intenta MySQL según `.env` y **falla con error visible** si no hay
 | `backend/` | `app.py` (servicio), `rules.py` (reglas), `sample.py` (muestra), `providers.py` (IA), `agent_tools.py` (9 herramientas), `agents.py` (orquestador), `jobs.py` (trabajos), `requirements.txt` (solo MySQL) |
 | `sql/` | Esquemas y migraciones idempotentes en orden: `01`–`03` (base), `05_agentic.sql`, `06_auth.sql`, `08_usuarios_rol.sql`, `09_carga.sql`, `10_admin_audit.sql` y `07_permisos.sql` al final (permisos sobre tablas ya creadas; sin borrar datos) |
 | `scripts/` | `gen_env.py` (secretos, conserva lo existente), `check.py` (verificación) |
-| `tests/` | `test_rules.py`, `test_agents.py`, `test_auth.py`, `test_carga.py` (sin red ni MySQL; proveedor de prueba) |
-| `docs/` | `PRD.md`, `arquitectura.md`, `agentes.md`, `backlog.md` |
+| `tests/` | `test_rules.py`, `test_agents.py`, `test_auth.py`, `test_carga.py`, `test_equivalencia.py` (sin red ni MySQL; proveedor de prueba) |
+| `docs/` | `PRD.md`, `MVP.md`, `arquitectura.md`, `agentes.md`, `backlog.md`, `capturas.md` |
 
 ## 5. Agentes y proveedor de IA
 
@@ -122,7 +122,7 @@ Límites conservadores (variables `NEXO_AI_*` en `.env`):
 | `NEXO_AI_MAX_STEPS` | 10 | Pasos del modelo por etapa |
 | `NEXO_AI_MAX_TOOL_CALLS` | 20 | Llamadas a herramientas por trabajo |
 | `NEXO_AI_MAX_RETRIES` | 2 | Reintentos ante respuestas inválidas |
-| `NEXO_AI_TIMEOUT_S` | 60 | Espera máxima por llamada al modelo |
+| `NEXO_AI_TIMEOUT_S` | 180 | Espera máxima por llamada al modelo |
 | `NEXO_AI_JOB_TIMEOUT_S` | 600 | Duración máxima del trabajo |
 | `NEXO_AI_MAX_ROWS_TOOL` | 200 | Filas máximas que ve una herramienta |
 | `NEXO_AI_REDACT` | 1 | Enmascara correos antes de enviarlos |
@@ -193,7 +193,8 @@ en MySQL), **Seguridad** (cambio de contraseña verificando la actual) y
 - **Correo:** `usuario@dominio.extensión`; vacíos excluidos.
 - Índice = `redondear((comprobaciones − incidencias) / comprobaciones × 100)`; sin comprobaciones = «Sin evaluar».
 - `row_id` (técnica, única) ≠ `id` (negocio, con duplicado intencional `CLI-004`).
-- Verificación: `python tests/test_rules.py`, `python tests/test_agents.py`, `python tests/test_auth.py`, `python tests/test_carga.py`, `python scripts/check.py` y `python scripts/check_ui.py`.
+- Verificación: `python tests/test_rules.py`, `python tests/test_agents.py`, `python tests/test_auth.py`, `python tests/test_carga.py`, `python tests/test_equivalencia.py`, `python scripts/check.py` y `python scripts/check_ui.py`.
+  La prueba de equivalencia compara Python con JavaScript y requiere Node; en CI se ejecuta siempre.
 
 ## 9. Seguridad local
 
@@ -201,13 +202,15 @@ Secretos en `.env` (fuera de `public`, en `.gitignore`); el navegador jamás rec
 ni la clave del proveedor; PHP valida origen en escrituras; MySQL con cuentas separadas,
 consultas parametrizadas y transacciones; decisiones como eventos acumulativos;
 límite de 10 000 filas por tabla; agentes sin comandos del sistema ni SQL arbitrario.
-App local de un solo operador, sin autenticación empresarial.
+App local para un equipo pequeño con roles (`operador`, `lector`, `admin`) y
+auditoría de las acciones de administración; sin SSO ni autenticación empresarial.
 
 ## 10. Estado de verificación
 
-Suites (2026-10-17): `tests/test_rules.py` (**OK**),
+Suites (2026-10-23): `tests/test_rules.py` (**OK**),
 `tests/test_agents.py` (**20/20**, con proveedor de prueba),
 `tests/test_auth.py` (**24/24**), `tests/test_carga.py` (**7/7**),
+`tests/test_equivalencia.py` (**Python ↔ JavaScript**, requiere Node; corre en CI),
 `scripts/check.py` (**OK**) y `scripts/check_ui.py` (**OK**). El mismo juego
 corre en CI (`.github/workflows/ci.yml`) en cada push, con un trabajo de humo
 que levanta MySQL + PHP + Python y ejecuta un análisis de punta a punta.

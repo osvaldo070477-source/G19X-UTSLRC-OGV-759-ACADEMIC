@@ -94,5 +94,5 @@ Navegador → PHP (`public/api.php`) → servicio Python (`backend/app.py`) → 
 - **Inc. 2 (agentic, implementado):** proveedor desacoplado (real OpenAI-compatible + prueba), 3 agentes + orquestador, trabajos en segundo plano, revisión humana, persistencia agentic, Centro de agentes. Corrida real verificada contra un proveedor externo (ver README §10).
 - **Inc. 3 (implementado):** carga gobernada (formulario + importación CSV con vista previa y auditoría), edición de metadatos y paginación.
 - **Inc. 4 (implementado):** usuarios con roles (operador, lector, admin), administración con auditoría de acciones y recuperación de contraseña con código de un solo uso.
-- **Inc. 5 (pendiente):** más reglas (rangos, fechas, referencias entre tablas), pruebas de equivalencia Py↔JS y copias de seguridad documentadas de `nexo_app`.
+- **Inc. 5 (parcial):** pruebas de equivalencia Py↔JS implementadas (`tests/test_equivalencia.py`, se ejecutan en CI); pendientes más reglas (rangos, fechas, referencias entre tablas) y copias de seguridad documentadas de `nexo_app`.
 - **Visión:** planificador proactivo y más herramientas de solo lectura, siempre con aprobación humana antes de escribir.

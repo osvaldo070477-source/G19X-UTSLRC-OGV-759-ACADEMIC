@@ -21,7 +21,8 @@
 
 ## Sprint 4 — Pendiente
 - Más reglas: rangos numéricos, formato de fecha y referencias entre tablas.
-- Pruebas de equivalencia automatizadas Py↔JS (generar casos y compararlos).
+- ~~Pruebas de equivalencia automatizadas Py↔JS (generar casos y compararlos).~~
+  Implementadas en `tests/test_equivalencia.py` y en CI.
 - Copias de seguridad documentadas de `nexo_app`.
 
 ## Visión
