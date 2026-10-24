@@ -33,6 +33,7 @@ if ($file !== false && str_starts_with($file, (string)realpath($public)) && is_f
         return;
     }
     header('Content-Type: ' . $mime[$ext] . '; charset=utf-8');
+    header('Cache-Control: no-store');
     readfile($file);
     return;
 }
