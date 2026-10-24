@@ -78,6 +78,9 @@ function loadAgentJob(id){
 function stageState(job, key){
   var evs=(job.etapas||[]).filter(function(e){return (e.etapa||e.ETAPA)===key;});
   if(evs.some(function(e){return (e.evento||e.EVENTO)==="fin";})) return "done";
+  // Un trabajo completado cerró todas sus etapas, aunque en una reanudación
+  // antigua no se haya guardado el evento "fin" (datos previos a la corrección).
+  if(job.estado==="completado" && evs.length) return "done";
   if(evs.length) return "active";
   return "idle";
 }

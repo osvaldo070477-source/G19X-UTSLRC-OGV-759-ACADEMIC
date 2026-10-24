@@ -42,6 +42,9 @@ Primera entrega académica: MVP local de gobierno de datos con centro de agentes
   campos de formulario y barra de avisos como región `status`.
 
 ### Corregido
+- La etapa **Calidad** se mostraba «En curso» en un trabajo completado cuando la
+  etapa se reanudaba tras una revisión humana: ahora se emite el cierre y la
+  interfaz lo refleja también en los trabajos antiguos.
 - Detalle del trabajo del agente en modo MySQL: las fechas anidadas no se
   serializaban y cerraban la conexión, mostrando un falso «no se pudo contactar
   al servicio Python» al pulsar **Ver**.

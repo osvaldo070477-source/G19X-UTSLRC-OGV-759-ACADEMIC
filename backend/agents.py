@@ -225,6 +225,8 @@ def stage_calidad(job, svc):
     if job.get("revision_aprobada") and job.get("sondeo_calidad", {}).get("falta"):
         svc["emit"]("etapa", {"etapa": "calidad", "evento": "reanudacion",
                               "resumen": "revisión aprobada; se continúa con el motor"})
+        svc["emit"]("etapa", {"etapa": "calidad", "evento": "fin",
+                              "resumen": "hallazgos confirmados por el motor tras la revisión"})
         return
     try:
         data = agent_loop(job, svc, "calidad", "calidad",

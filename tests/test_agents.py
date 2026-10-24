@@ -14,7 +14,7 @@ BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(BASE, "backend"))
 
 from agent_tools import ALLOWED_TABLES, execute_tool, redact_value, validate_call  # noqa: E402
-from agents import FINAL_QUALITY, agent_loop, drive  # noqa: E402
+from agents import FINAL_QUALITY, agent_loop, drive, stage_calidad  # noqa: E402
 from agents import JobHalt  # noqa: E402
 from jobs import Manager, MemoryStore, MysqlStore, TERMINAL  # noqa: E402
 from providers import (OpenAICompatProvider, ProviderError, StubProvider,  # noqa: E402
@@ -206,6 +206,16 @@ class TestAgentLoop(unittest.TestCase):
         with self.assertRaises(JobHalt) as c:
             agent_loop(job, svc, "x", "catalogo", "", ["listar_tablas"], "{}", 6)
         self.assertEqual(c.exception.codigo, "respuesta_invalida")
+
+    def test_calidad_reanudada_cierra_la_etapa(self):
+        # Una etapa reanudada tras revisión debe emitir "fin"; si no, la
+        # interfaz la muestra "En curso" aunque el trabajo haya terminado.
+        svc, emitted = self.svc(StubProvider(test_cfg(), []))
+        job = {"revision_aprobada": True, "sondeo_calidad": {"falta": "no coincidió"}}
+        stage_calidad(job, svc)
+        eventos = [e["evento"] for k, e in emitted
+                   if k == "etapa" and e["etapa"] == "calidad"]
+        self.assertEqual(eventos, ["inicio", "motor", "reanudacion", "fin"])
 
 
 class TestJobs(unittest.TestCase):
