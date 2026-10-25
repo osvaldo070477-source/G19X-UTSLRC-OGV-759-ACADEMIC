@@ -31,9 +31,11 @@ def redact_value(value, redact=True):
     s = str(value)
     if not redact:
         return s
-    if "@" in s and EMAIL_RE.match(s.strip()):
+    if "@" in s:
         user, _, domain = s.strip().partition("@")
-        return (user[:1] + "***@" + domain) if user else "***@" + domain
+        if domain:
+            return (user[:1] + "***@" + domain) if user else "***@" + domain
+        return (user[:1] + "***@") if user else "***@"
     return s if len(s) <= 60 else s[:57] + "..."
 
 
@@ -91,8 +93,17 @@ def validate_call(name, args):
             return None, f"Columna no autorizada: {args.get('tabla')}.{args['columna']}."
     if "regla" in args and args["regla"] not in ("required", "unique", "email"):
         return None, f"Regla desconocida: {args['regla']}."
-    if "maximo" in args and not (1 <= int(args["maximo"]) <= 20):
-        return None, "maximo debe estar entre 1 y 20."
+    if "maximo" in args:
+        raw = args["maximo"]
+        if isinstance(raw, bool) or (isinstance(raw, float) and not raw.is_integer()):
+            return None, "maximo debe ser un entero entre 1 y 20."
+        try:
+            maximo = int(raw)
+        except (TypeError, ValueError):
+            return None, "maximo debe ser un entero entre 1 y 20."
+        if not 1 <= maximo <= 20:
+            return None, "maximo debe estar entre 1 y 20."
+        args["maximo"] = maximo
     return args, None
 
 

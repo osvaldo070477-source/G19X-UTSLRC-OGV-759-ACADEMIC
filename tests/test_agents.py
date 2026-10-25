@@ -93,7 +93,11 @@ class TestTools(unittest.TestCase):
         _, e2 = validate_call("perfil_columna", {"tabla": "clientes", "columna": "clave"})
         _, e3 = validate_call("obtener_evidencia", {"tabla": "clientes", "columna": "email",
                                                    "regla": "email", "maximo": 99})
-        self.assertTrue(e1 and e2 and e3)
+        _, e4 = validate_call("obtener_evidencia", {"tabla": "clientes", "columna": "email",
+                                                   "regla": "email", "maximo": "abc"})
+        _, e5 = validate_call("obtener_evidencia", {"tabla": "clientes", "columna": "email",
+                                                   "regla": "email", "maximo": True})
+        self.assertTrue(e1 and e2 and e3 and e4 and e5)
 
     def test_conteos_reales(self):
         ctx = self.ctx()
@@ -118,6 +122,8 @@ class TestTools(unittest.TestCase):
         self.assertNotIn("lucia.fernandez", joined)
         self.assertIn("@", joined)
         self.assertEqual(redact_value("x@y.zz", False), "x@y.zz")
+        self.assertEqual(redact_value("ana.gomez@", True), "a***@")
+        self.assertEqual(redact_value("@example.com", True), "***@example.com")
 
 
 class TestProvider(unittest.TestCase):
