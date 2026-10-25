@@ -2,6 +2,9 @@
 // Enrutador para: php -S 127.0.0.1:8000 server/router.php
 // Sirve solo archivos de public/ y dirige /api* a public/api.php.
 declare(strict_types=1);
+header('X-Content-Type-Options: nosniff');
+header('X-Frame-Options: DENY');
+header('Referrer-Policy: no-referrer');
 
 $public = dirname(__DIR__) . '/public';
 $uri = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
@@ -14,8 +17,10 @@ if ($uri === '/' || $uri === '/index.php') {
     require $public . '/index.php';
     return;
 }
+$base = realpath($public);
 $file = realpath($public . $uri);
-if ($file !== false && str_starts_with($file, (string)realpath($public)) && is_file($file)) {
+if ($base !== false && $file !== false
+        && str_starts_with($file, $base . DIRECTORY_SEPARATOR) && is_file($file)) {
     $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
     // Bloquear archivos privados aunque alguien los copie a public.
     if (in_array($ext, ['env', 'sql'], true) || basename($file) === '.env') {
@@ -34,6 +39,9 @@ if ($file !== false && str_starts_with($file, (string)realpath($public)) && is_f
     }
     header('Content-Type: ' . $mime[$ext] . '; charset=utf-8');
     header('Cache-Control: no-store');
+    if ($ext === 'html') {
+        header("Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; object-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'");
+    }
     readfile($file);
     return;
 }

@@ -43,12 +43,36 @@ function nexo_len(string $s): int {
     }
     return strlen($s);
 }
+function nexo_headers(): void {
+    header('X-Content-Type-Options: nosniff');
+    header('X-Frame-Options: DENY');
+    header('Referrer-Policy: no-referrer');
+    header('Cache-Control: no-store');
+}
+function nexo_host_port(string $url): array {
+    $p = parse_url($url);
+    if (!is_array($p) || empty($p['host'])) return ['', ''];
+    $scheme = strtolower((string)($p['scheme'] ?? 'http'));
+    $port = isset($p['port']) ? (string)(int)$p['port'] : ($scheme === 'https' ? '443' : '80');
+    return [strtolower((string)$p['host']), $port];
+}
+function nexo_mismo_origen(string $url): bool {
+    $host = $_SERVER['HTTP_HOST'] ?? '';
+    if ($host === '') return false;
+    [$expectedHost, $expectedPort] = nexo_host_port('http://' . $host);
+    [$actualHost, $actualPort] = nexo_host_port($url);
+    return $expectedHost !== '' && $actualHost !== ''
+        && hash_equals($expectedHost, $actualHost) && $expectedPort === $actualPort;
+}
 function nexo_out(int $code, array $data): void {
+    nexo_headers();
     http_response_code($code);
     header('Content-Type: application/json; charset=utf-8');
     echo json_encode($data, JSON_UNESCAPED_UNICODE);
     exit;
 }
+
+nexo_headers();
 
 $token = nexo_env('NEXO_INTERNAL_TOKEN', '');
 $pyBase = rtrim(nexo_env('NEXO_PY_URL', 'http://127.0.0.1:8001'), '/');
@@ -63,9 +87,11 @@ $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 if (in_array($action, ['analyze', 'decisions', 'agent_start', 'agent_cancel', 'agent_review', 'agent_retry', 'auth_register', 'auth_login', 'auth_logout', 'auth_update_name', 'auth_change_password', 'auth_recover', 'auth_recovery_regen', 'admin_estado', 'admin_desbloquear', 'admin_reset', 'admin_rol', 'source_add', 'source_preview', 'source_import', 'source_meta'], true)) {
     $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
     $referer = $_SERVER['HTTP_REFERER'] ?? '';
-    $host = $_SERVER['HTTP_HOST'] ?? '';
-    if (($origin !== '' && strpos($origin, $host) === false) ||
-        ($origin === '' && $referer !== '' && strpos($referer, $host) === false)) {
+    if ($origin !== '') {
+        if (!nexo_mismo_origen($origin)) {
+            nexo_out(403, ['error' => 'Origen no permitido para escritura.']);
+        }
+    } elseif ($referer !== '' && !nexo_mismo_origen($referer)) {
         nexo_out(403, ['error' => 'Origen no permitido para escritura.']);
     }
 }
@@ -248,8 +274,6 @@ if ($expectMethod === 'POST') {
     if ($action === 'auth_logout') {
         $data = [];
     }
-    $body = json_encode($data, JSON_UNESCAPED_UNICODE);
-
     $body = json_encode($data, JSON_UNESCAPED_UNICODE);
 }
 
