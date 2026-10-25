@@ -37,10 +37,12 @@ class MemoryStore:
 
     def __init__(self):
         self.jobs, self.seq = {}, [0]
+        self.lock = threading.Lock()
 
     def create(self, job):
-        self.seq[0] += 1
-        job["id"] = self.seq[0]
+        with self.lock:
+            self.seq[0] += 1
+            job["id"] = self.seq[0]
         self.jobs[job["id"]] = job
         return job["id"]
 

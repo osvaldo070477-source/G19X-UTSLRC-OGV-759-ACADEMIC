@@ -63,13 +63,15 @@ jobs:
           php -S 127.0.0.1:8000 server/router.php & echo $! > php.pid
           sleep 4
           curl -sf http://127.0.0.1:8000/api.php?action=health
-          CSRF=$(curl -s -c jar http://127.0.0.1:8000/api.php?action=auth_csrf | python -c "import sys,json;print(json.load(sys.stdin)['csrf'])")
-          curl -sf -b jar -H "X-CSRF-Token: $CSRF" -H 'Content-Type: application/json' -d '{}' 'http://127.0.0.1:8000/api.php?action=analyze' | grep -o '"indice":[0-9]*'
           API=http://127.0.0.1:8000/api.php
-          # Rol operador: recién registrado, puede escribir (200)
+          CSRF=$(curl -s -c jar "$API?action=auth_csrf" | python -c "import sys,json;print(json.load(sys.stdin)['csrf'])")
+          # Sin sesión: 401; origen ajeno: 403 (el CSRF no basta)
+          test "$(curl -s -o /dev/null -w '%{http_code}' -b jar -H "X-CSRF-Token: $CSRF" -H 'Content-Type: application/json' -d '{}' "$API?action=analyze")" = "401"
+          test "$(curl -s -o /dev/null -w '%{http_code}' -b jar -H "X-CSRF-Token: $CSRF" -H 'Origin: http://evil.test' -H 'Content-Type: application/json' -d '{}' "$API?action=analyze")" = "403"
+          # Rol operador: recién registrado, puede escribir (200) y el motor da índice 90
           CO=$(curl -s -c jo -b jo "$API?action=auth_csrf" | python -c "import sys,json;print(json.load(sys.stdin)['csrf'])")
           curl -sf -c jo -b jo -H "X-CSRF-Token: $CO" -H 'Content-Type: application/json' -d '{"nombre":"Operador Prueba","email":"operador@nexo.test","password":"Operador1234"}' "$API?action=auth_register" > /dev/null
-          test "$(curl -s -o /dev/null -w '%{http_code}' -b jo -H "X-CSRF-Token: $CO" -H 'Content-Type: application/json' -d '{}' "$API?action=analyze")" = "200"
+          curl -sf -b jo -H "X-CSRF-Token: $CO" -H 'Content-Type: application/json' -d '{}' "$API?action=analyze" | grep -o '"indice":90'
           # Se asciende a admin y un admin asigna rol lector a la otra cuenta
           CL=$(curl -s -c jl -b jl "$API?action=auth_csrf" | python -c "import sys,json;print(json.load(sys.stdin)['csrf'])")
           RL=$(curl -sf -c jl -b jl -H "X-CSRF-Token: $CL" -H 'Content-Type: application/json' -d '{"nombre":"Lector Prueba","email":"lector@nexo.test","password":"Lector1234"}' "$API?action=auth_register")

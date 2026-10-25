@@ -93,7 +93,8 @@ function exitToWelcome(){
   closeNav();
   $("shell").hidden=true;
   $("welcome").hidden=false;
-  $("btnEnter").focus();
+  var f=$("btnEnter").hidden?$("btnShowLogin"):$("btnEnter");
+  if(f) f.focus();
 }
 $("userBtn").addEventListener("click", function(){ toggleUserMenu(); });
 $("userMenu").querySelectorAll("[data-m]").forEach(function(b){

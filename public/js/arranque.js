@@ -13,4 +13,4 @@ loadLocal();
 detectMode().then(function(){ renderAll(); refreshSession(); loadCsrf(); });
 renderAll();
 setModeBadge();
-$("btnEnter").focus();
+($("btnEnter").hidden?$("btnShowLogin"):$("btnEnter")).focus();

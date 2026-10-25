@@ -54,7 +54,7 @@ import json
 import os
 import sys
 import threading
-from http.server import BaseHTTPRequestHandler, HTTPServer
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlparse, parse_qs
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -367,6 +367,15 @@ class Handler(BaseHTTPRequestHandler):
             return True  # sin token configurado, el servidor rechaza escrituras
         return self.headers.get("X-NEXO-Token") != INTERNAL_TOKEN
 
+    def _require_session(self):
+        """True si hay una sesión válida y activa; si no, responde 401."""
+        try:
+            self.server.auth.me(self.headers.get("X-NEXO-Session") or "")
+        except AuthError as e:
+            self._auth_error(e)
+            return False
+        return True
+
     def _body(self):
         try:
             n = int(self.headers.get("Content-Length") or 0)
@@ -394,6 +403,8 @@ class Handler(BaseHTTPRequestHandler):
             return
         if self._need_token():
             self._send(401, {"error": "Token interno inválido o ausente."})
+            return
+        if not self._require_session():
             return
         if path == "/api/agent/status":
             self._send(200, {**provider_status(AI_CFG), "agents": AGENTS,
@@ -467,7 +478,8 @@ class Handler(BaseHTTPRequestHandler):
             try:
                 self._send(200, {"jobs": self.server.agent_manager.list(limit)})
             except Exception as e:
-                self._send(502, {"error": f"No se pudieron listar los trabajos: {e}"})
+                log_internal("agent_list", e)
+                self._send(502, {"error": "No se pudieron listar los trabajos."})
             return
         if path.startswith("/api/agent/jobs/"):
             try:
@@ -478,7 +490,8 @@ class Handler(BaseHTTPRequestHandler):
             try:
                 job = self.server.agent_manager.get(job_id)
             except Exception as e:
-                self._send(502, {"error": f"No se pudo recuperar el trabajo: {e}"})
+                log_internal("agent_get", e)
+                self._send(502, {"error": "No se pudo recuperar el trabajo."})
                 return
             if not job:
                 self._send(404, {"error": "Trabajo no encontrado."})
@@ -501,7 +514,8 @@ class Handler(BaseHTTPRequestHandler):
                                  for r in reversed(_mem_runs[-limit:])]
                 self._send(200, {"runs": items})
             except Exception as e:
-                self._send(502, {"error": f"No se pudo consultar el historial: {e}"})
+                log_internal("runs", e)
+                self._send(502, {"error": "No se pudo consultar el historial."})
             return
         if path.startswith("/api/runs/"):
             try:
@@ -520,7 +534,8 @@ class Handler(BaseHTTPRequestHandler):
                     return
                 self._send(200, {"run": run})
             except Exception as e:
-                self._send(502, {"error": f"No se pudo recuperar la ejecución: {e}"})
+                log_internal("run_detail", e)
+                self._send(502, {"error": "No se pudo recuperar la ejecución."})
             return
         if path == "/api/catalog":
             qs = parse_qs(parsed.query)
@@ -597,6 +612,10 @@ class Handler(BaseHTTPRequestHandler):
         if self._need_token():
             self._send(401, {"error": "Token interno inválido o ausente."})
             return
+        public_post = ("/api/auth/register", "/api/auth/login",
+                       "/api/auth/recover", "/api/auth/logout")
+        if path not in public_post and not self._require_session():
+            return
         if path != "/api/auth/logout" and self._is_lector() and (
                 path in ("/api/analyze", "/api/decisions",
                          "/api/auth/update_name", "/api/auth/change_password",
@@ -609,6 +628,9 @@ class Handler(BaseHTTPRequestHandler):
         data = self._body()
         if data is None:
             self._send(400, {"error": "Cuerpo JSON inválido."})
+            return
+        if not isinstance(data, dict):
+            self._send(400, {"error": "El cuerpo debe ser un objeto JSON."})
             return
         if path == "/api/auth/register":
             try:
@@ -798,7 +820,8 @@ class Handler(BaseHTTPRequestHandler):
             except ValueError as e:
                 self._send(409, {"error": str(e)})
             except Exception as e:
-                self._send(502, {"error": f"No se pudo iniciar el trabajo: {e}"})
+                log_internal("agent_start", e)
+                self._send(502, {"error": "No se pudo iniciar el trabajo."})
             else:
                 self._send(202, {"job_id": job_id, "estado": "en_ejecucion",
                                  "nota": "Trabajo en segundo plano; consulta su progreso."})
@@ -830,7 +853,8 @@ class Handler(BaseHTTPRequestHandler):
             except ValueError as e:
                 self._send(409, {"error": str(e)})
             except Exception as e:
-                self._send(502, {"error": f"No se pudo procesar la acción: {e}"})
+                log_internal("agent_action", e)
+                self._send(502, {"error": "No se pudo procesar la acción."})
             return
         if path == "/api/analyze":
             try:
@@ -853,7 +877,8 @@ class Handler(BaseHTTPRequestHandler):
             except ValueError as e:
                 self._send(413, {"error": str(e)})
             except Exception as e:
-                self._send(502, {"error": f"Error al analizar: {e}"})
+                log_internal("analyze", e)
+                self._send(502, {"error": "No se pudo completar el análisis."})
             return
         # /api/decisions
         accion = data.get("accion")
@@ -872,11 +897,14 @@ class Handler(BaseHTTPRequestHandler):
             self._send(400, {"error": "Tabla desconocida."})
             return
         try:
-            author = self._session_user()  # None si es invitado; decidir no exige sesión
+            author = self._session_user()
+            if not author:
+                self._send(401, {"error": "Sin sesión válida.", "code": "sesion_invalida"})
+                return
             if self.server.use_mysql:
                 fid = add_decision_mysql(data["run_id"], data["tabla"], data["columna"],
                                          data["regla"], accion, comentario,
-                                         decided_by=author["id"] if author else None,
+                                         decided_by=author["id"],
                                          with_author=self.server.with_author)
             else:
                 fid = add_decision_memory(data["run_id"], data["tabla"], data["columna"],
@@ -886,7 +914,8 @@ class Handler(BaseHTTPRequestHandler):
         except ValueError as e:
             self._send(409, {"error": str(e)})
         except Exception as e:
-            self._send(502, {"error": f"No se pudo registrar la decisión: {e}"})
+            log_internal("decision", e)
+            self._send(502, {"error": "No se pudo registrar la decisión."})
 
 
 def main():
@@ -900,7 +929,8 @@ def main():
     if use_mysql and not INTERNAL_TOKEN:
         print("AVISO: NEXO_INTERNAL_TOKEN no configurado; genera .env con scripts/gen_env.py", flush=True)
     mode = "mysql" if use_mysql else "demo"
-    srv = HTTPServer((args.host, args.port), Handler)
+    srv = ThreadingHTTPServer((args.host, args.port), Handler)
+    srv.daemon_threads = True
     srv.use_mysql = use_mysql
 
     def _fetch_tables(fuente):

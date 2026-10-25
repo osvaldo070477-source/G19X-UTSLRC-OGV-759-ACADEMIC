@@ -181,6 +181,9 @@ function enterApp(){
   $("welcome").hidden=true;
   $("shell").hidden=false;
   showTab("observatorio");
+  renderAll();
+  var main=$("contenido");
+  if(main&&main.focus) main.focus();
 }
 function closeNav(){
   document.body.classList.remove("nav-open");
