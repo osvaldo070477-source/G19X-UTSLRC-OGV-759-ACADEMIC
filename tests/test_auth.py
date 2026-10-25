@@ -114,12 +114,19 @@ class TestServicio(unittest.TestCase):
     def test_cambio_contrasena(self):
         s = svc()
         user, token = s.register("Ana", "ana@example.com", "Segura123")
+        _, token2 = s.login("ana@example.com", "Segura123")
+        codigo = s.issue_recovery(user["id"])
         with self.assertRaises(AuthError) as c:
             s.change_password(token, "Mal12345", "Nueva1234")
         self.assertEqual(c.exception.code, "credenciales_invalidas")
         with self.assertRaises(AuthError):
             s.change_password(token, "Segura123", "corta")
         self.assertTrue(s.change_password(token, "Segura123", "Nueva1234"))
+        self.assertEqual(s.me(token), user["id"])
+        with self.assertRaises(AuthError):
+            s.me(token2)
+        with self.assertRaises(AuthError):
+            s.recover("ana@example.com", codigo, "Otra1234")
         user2, _ = s.login("ana@example.com", "Nueva1234")
         self.assertEqual(user2["id"], user["id"])
         with self.assertRaises(AuthError):
@@ -127,19 +134,24 @@ class TestServicio(unittest.TestCase):
 
     def test_cuenta_desactivada_no_entra(self):
         s = svc()
-        user, _ = s.register("Ana", "ana@example.com", "Segura123")
+        user, token = s.register("Ana", "ana@example.com", "Segura123")
+        self.assertEqual(s.me(token), user["id"])
         user["estado"] = "desactivada"
+        with self.assertRaises(AuthError):
+            s.me(token)
         with self.assertRaises(AuthError) as c:
             s.login("ana@example.com", "Segura123")
         self.assertEqual(c.exception.code, "credenciales_invalidas")
 
     def test_recuperacion_un_solo_uso(self):
         s = svc()
-        user, _ = s.register("Ana", "ana@example.com", "Segura123")
+        user, token = s.register("Ana", "ana@example.com", "Segura123")
         codigo = s.issue_recovery(user["id"])
         self.assertEqual(len(codigo), 12)
         u2 = s.recover("ana@example.com", codigo, "Nueva1234")
         self.assertEqual(u2["id"], user["id"])
+        with self.assertRaises(AuthError):
+            s.me(token)
         u3, _ = s.login("ana@example.com", "Nueva1234")
         self.assertEqual(u3["id"], user["id"])
         with self.assertRaises(AuthError):

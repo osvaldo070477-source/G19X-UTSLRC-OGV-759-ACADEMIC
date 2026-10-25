@@ -14,6 +14,7 @@
 import hashlib
 import re
 import secrets
+import threading
 import time
 
 EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
@@ -90,6 +91,7 @@ class MemoryAuthStore:
 
     def __init__(self):
         self.users, self.sessions, self.seq = {}, {}, [0]
+        self.lock = threading.Lock()
         self.audit = []
 
     def find_user(self, email):
@@ -102,8 +104,10 @@ class MemoryAuthStore:
         return None
 
     def insert_user(self, nombre, email, pw_hash):
-        self.seq[0] += 1
-        user = {"id": self.seq[0], "nombre": nombre, "email": email,
+        with self.lock:
+            self.seq[0] += 1
+            uid = self.seq[0]
+        user = {"id": uid, "nombre": nombre, "email": email,
                 "pw_hash": pw_hash, "failed": 0, "locked_until": 0,
                 "rol": "operador", "estado": "activo", "recovery_hash": None,
                 "creado_en": time.strftime("%Y-%m-%d %H:%M:%S")}
@@ -173,6 +177,12 @@ class MemoryAuthStore:
 
     def delete_session(self, thash):
         self.sessions.pop(thash, None)
+
+    def delete_sessions_for_user(self, uid, keep=None):
+        """Cierra todas las sesiones del usuario; conserva `keep` si se indica."""
+        for thash, s in list(self.sessions.items()):
+            if s["user_id"] == uid and thash != keep:
+                self.sessions.pop(thash, None)
 
 
 class MysqlAuthStore:
@@ -396,6 +406,19 @@ class MysqlAuthStore:
         finally:
             conn.close()
 
+    def delete_sessions_for_user(self, uid, keep=None):
+        """Cierra todas las sesiones del usuario; conserva `keep` si se indica."""
+        conn = self._connect()
+        try:
+            cur = conn.cursor()
+            if keep:
+                cur.execute("DELETE FROM sessions WHERE user_id=%s AND token_hash<>%s", (uid, keep))
+            else:
+                cur.execute("DELETE FROM sessions WHERE user_id=%s", (uid,))
+            conn.commit()
+        finally:
+            conn.close()
+
 
 class AuthService:
     def __init__(self, store, runs_provider=None):
@@ -467,6 +490,7 @@ class AuthService:
         if not self.store.set_password(user["id"], hash_password(nueva)):
             raise AuthError("sesion_invalida", "Sesión vencida o inválida.")
         self.store.set_recovery(user["id"], None)
+        self.store.delete_sessions_for_user(user["id"])
         return user
 
     def login(self, email, password):
@@ -496,8 +520,13 @@ class AuthService:
     def me(self, token):
         if not token:
             raise AuthError("sesion_invalida", "Sin sesión.")
-        s = self.store.find_session(token_hash(token))
+        thash = token_hash(token)
+        s = self.store.find_session(thash)
         if not s:
+            raise AuthError("sesion_invalida", "Sesión vencida o inválida.")
+        user = self.store.get_user(s["user_id"])
+        if not user or (user.get("estado") or "activo") != "activo":
+            self.store.delete_session(thash)
             raise AuthError("sesion_invalida", "Sesión vencida o inválida.")
         return s["user_id"]
 
@@ -556,6 +585,8 @@ class AuthService:
             raise AuthError("datos_invalidos", "No puedes cambiar tu propia cuenta.")
         if not self.store.set_estado(target_id, estado):
             raise AuthError("datos_invalidos", "Usuario no encontrado.")
+        if estado == "desactivada":
+            self.store.delete_sessions_for_user(target_id)
         self.store.append_audit(admin["id"], "estado", target_id, "estado=" + estado)
         return True
 
@@ -587,6 +618,8 @@ class AuthService:
             raise AuthError("datos_invalidos", err)
         if not self.store.set_password(target_id, hash_password(nueva)):
             raise AuthError("datos_invalidos", "Usuario no encontrado.")
+        self.store.set_recovery(target_id, None)
+        self.store.delete_sessions_for_user(target_id)
         self.store.append_audit(admin["id"], "reset_password", target_id, "")
         return True
 
@@ -637,6 +670,8 @@ class AuthService:
             raise AuthError("datos_invalidos", err)
         if not self.store.set_password(uid, hash_password(nueva)):
             raise AuthError("sesion_invalida", "Sesión vencida o inválida.")
+        self.store.set_recovery(uid, None)
+        self.store.delete_sessions_for_user(uid, keep=token_hash(token))
         return True
 
     def activity(self, token, limit=10, offset=0):
