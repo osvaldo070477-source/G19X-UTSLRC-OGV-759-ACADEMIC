@@ -1,7 +1,8 @@
 # MVP — NEXO: Arquitectura Agentic para Data Governance
 
-**Autor:** Osvaldo (`osvaldo070477-source`) · **Institución:** UTSLRC · **Fecha:** 2026-10-23
-**Entrega:** MVP académico (etiqueta `v1.0`) · **Licencia:** MIT
+**Autor:** Osvaldo (`osvaldo070477-source`) · **Institución:** UTSLRC · **Fecha:** 2026-10-23 · **Actualizado:** 2026-10-25
+**Entrega:** MVP académico (etiqueta `v1.0`; parche de endurecimiento `v1.0.1`) · **Licencia:** MIT
+**Estado:** `v1.0.1` en `main`, CI verde · **Notas:** [release-v1.0.1.md](release-v1.0.1.md)
 
 ## 1. Qué es
 
@@ -65,6 +66,14 @@ el guion del video es material aparte de la entrega.
   El detalle está en el `README` §10.
 - **Capturas:** las cuatro están en `docs/capturas/` y enlazadas en el `README`
   §1, §5, §8 y §10 (Observatorio, Calidad, Agentes y trabajo #13).
+
+### Parche de endurecimiento 1.0.1
+
+La entrega base es `v1.0`. Sobre ella, `v1.0.1` corrige la revocación de
+sesiones, la autorización de la API, la robustez de la carga CSV, la redacción
+de datos, las cabeceras de seguridad y la concurrencia. **No cambia las reglas,
+los datos ni las cifras** (208/21/8/90); las capturas siguen vigentes. Detalle:
+[release-v1.0.1.md](release-v1.0.1.md).
 
 ## 5. Qué queda fuera
 
