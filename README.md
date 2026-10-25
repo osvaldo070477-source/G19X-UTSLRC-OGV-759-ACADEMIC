@@ -86,7 +86,7 @@ sin `--demo` intenta MySQL según `.env` y **falla con error visible** si no hay
 | `sql/` | Esquemas y migraciones idempotentes en orden: `01`–`03` (base), `05_agentic.sql`, `06_auth.sql`, `08_usuarios_rol.sql`, `09_carga.sql`, `10_admin_audit.sql` y `07_permisos.sql` al final (permisos sobre tablas ya creadas; sin borrar datos) |
 | `scripts/` | `gen_env.py` (secretos, conserva lo existente), `check.py` (verificación) |
 | `tests/` | `test_rules.py`, `test_agents.py`, `test_auth.py`, `test_carga.py`, `test_equivalencia.py` (sin red ni MySQL; proveedor de prueba) |
-| `docs/` | `PRD.md`, `MVP.md`, `arquitectura.md`, `agentes.md`, `backlog.md`, `capturas.md` |
+| `docs/` | `PRD.md`, `MVP.md`, `arquitectura.md`, `agentes.md`, `backlog.md`, `capturas.md`, `revision-asesor-2026-10-21.md` y `release-v1.0.1.md` |
 
 ## 5. Agentes y proveedor de IA
 
