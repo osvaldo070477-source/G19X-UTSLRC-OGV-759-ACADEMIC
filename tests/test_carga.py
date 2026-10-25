@@ -53,6 +53,25 @@ class TestCSV(unittest.TestCase):
         _, err = parse_csv(grande)
         self.assertTrue(err)
 
+    def test_csv_con_bom(self):
+        filas, err = parse_csv("\ufeffid,nombre,email\nA1,Ana,a@b.co\n")
+        self.assertIsNone(err)
+        res = preview_rows("clientes", filas, set())
+        self.assertEqual(len(res["validas"]), 1)
+        self.assertEqual(res["rechazadas"], [])
+
+    def test_fechas_numeros_y_longitudes(self):
+        _, e1 = validate_row("pedidos", {"id": "P", "cliente_id": "C",
+                                         "fecha": "2026-99-99", "total": 1}, set())
+        _, e2 = validate_row("productos", {"id": "P", "nombre": "T", "precio": "nan"}, set())
+        _, e3 = validate_row("productos", {"id": "P", "nombre": "T", "precio": "inf"}, set())
+        _, e4 = validate_row("clientes", {"id": "X" * 17, "nombre": "A", "email": "a@b.co"}, set())
+        _, e5 = validate_row("clientes", {"id": "X", "nombre": "A" * 121, "email": "a@b.co"}, set())
+        _, e6 = validate_row("clientes", {"id": "X", "nombre": "A", "email": "a" * 156 + "@b.co"}, set())
+        _, e7 = validate_row("pedidos", {"id": "P", "cliente_id": "C",
+                                         "fecha": "2026-01-01", "total": 100000000}, set())
+        self.assertTrue(e1 and e2 and e3 and e4 and e5 and e6 and e7)
+
 
 class TestRecuperacion(unittest.TestCase):
     def test_flujo_completo(self):

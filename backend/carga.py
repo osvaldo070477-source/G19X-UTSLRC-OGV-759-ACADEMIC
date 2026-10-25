@@ -8,12 +8,15 @@
 """
 import csv
 import io
+import math
 import re
+from datetime import date
 
 MAX_IMPORT_BATCH = 500
 MAX_ROWS_PER_TABLE = 10000
 FECHA_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+LIMITES = {"id": 16, "cliente_id": 16, "nombre": 120, "email": 160}
 
 SCHEMAS = {
     "clientes": {
@@ -63,6 +66,8 @@ def validate_row(tabla, fila, ids_existentes):
         v = "" if v is None else (v if isinstance(v, (int, float)) else str(v).strip())
         if col in sch["requeridas"] and _vacio(v):
             return None, f"Falta el campo obligatorio: {col}."
+        if not _vacio(v) and col in LIMITES and len(str(v)) > LIMITES[col]:
+            return None, f"{col} supera el máximo de {LIMITES[col]} caracteres."
         tipo = sch["tipos"][col]
         if tipo == "correo" and not _vacio(v) and not EMAIL_RE.match(str(v)):
             return None, f"Correo inválido en {col}."
@@ -71,8 +76,18 @@ def validate_row(tabla, fila, ids_existentes):
                 v = float(v)
             except (TypeError, ValueError):
                 return None, f"{col} debe ser un número."
-        if tipo == "fecha" and not _vacio(v) and not FECHA_RE.match(str(v)):
-            return None, f"{col} debe tener formato AAAA-MM-DD."
+            if not math.isfinite(v):
+                return None, f"{col} debe ser un número finito."
+            if abs(v) >= 100_000_000:
+                return None, f"{col} está fuera del rango permitido."
+        if tipo == "fecha" and not _vacio(v):
+            s = str(v)
+            if not FECHA_RE.match(s):
+                return None, f"{col} debe tener formato AAAA-MM-DD."
+            try:
+                date.fromisoformat(s)
+            except ValueError:
+                return None, f"{col} debe ser una fecha válida AAAA-MM-DD."
         limpia[col] = v
     clave = str(limpia.get("id", "")).strip()
     if clave in ids_existentes:
@@ -83,8 +98,9 @@ def validate_row(tabla, fila, ids_existentes):
 
 def parse_csv(texto):
     """Parsea CSV a lista de dicts. Devuelve (filas, error)."""
+    texto = (texto or "").lstrip("\ufeff").strip()
     try:
-        lector = csv.DictReader(io.StringIO((texto or "").strip()))
+        lector = csv.DictReader(io.StringIO(texto))
     except Exception as e:  # noqa: BLE001 - formato ilegible
         return None, f"No se pudo leer el CSV: {e}."
     if not lector.fieldnames:
@@ -135,6 +151,8 @@ def connect(cfg):
 
 
 def existing_ids(source_cfg, tabla):
+    if tabla not in SCHEMAS:
+        raise ValueError("Tabla no permitida.")
     conn = connect(source_cfg)
     try:
         cur = conn.cursor()
@@ -145,6 +163,8 @@ def existing_ids(source_cfg, tabla):
 
 
 def table_count(source_cfg, tabla):
+    if tabla not in SCHEMAS:
+        raise ValueError("Tabla no permitida.")
     conn = connect(source_cfg)
     try:
         cur = conn.cursor()
@@ -157,6 +177,8 @@ def table_count(source_cfg, tabla):
 def insert_validas(wr_cfg, source_cfg, tabla, validas, user_id):
     """Inserta y audita en UNA transacción con la cuenta exclusiva.
     Requiere: INSERT en nexo_source.<tabla> e INSERT en nexo_app.source_audit."""
+    if tabla not in SCHEMAS:
+        raise ValueError("Tabla no permitida.")
     if table_count(source_cfg, tabla) + len(validas) > MAX_ROWS_PER_TABLE:
         raise ValueError(f"Se superaría el límite de {MAX_ROWS_PER_TABLE} filas en {tabla}.")
     sch = SCHEMAS[tabla]
