@@ -26,6 +26,8 @@ Primera entrega académica: MVP local de gobierno de datos con centro de agentes
 - Integración continua: pruebas de Python y humo de extremo a extremo
   (PHP → Python → MySQL) con comprobación de roles.
 - Documento de MVP (`docs/MVP.md`): alcance, recorrido de la demostración y exclusiones.
+- Capturas de pantalla de Observatorio, Calidad, Agentes y del trabajo #13 en
+  `docs/capturas/`, enlazadas en el README.
 - Pruebas de equivalencia Python/JavaScript del motor de reglas
   (`tests/test_equivalencia.py`), ejecutadas en CI.
 - Documentación: PRD, arquitectura, agentes, backlog y lista de capturas.

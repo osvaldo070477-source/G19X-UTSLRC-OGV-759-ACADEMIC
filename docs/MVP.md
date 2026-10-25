@@ -63,8 +63,8 @@ el guion del video es material aparte de la entrega.
   modelo `gemini-3.5-flash`, `completado` en ~82 s, 9 llamadas al modelo,
   9 herramientas, 10 577 tokens y **8 recomendaciones** (5 Alta, 3 Media).
   El detalle está en el `README` §10.
-- **Capturas:** definidas en `docs/capturas.md`; se enlazan desde el `README`
-  §1, §5, §8 y §10 (pendientes de adjuntar las imágenes).
+- **Capturas:** las cuatro están en `docs/capturas/` y enlazadas en el `README`
+  §1, §5, §8 y §10 (Observatorio, Calidad, Agentes y trabajo #13).
 
 ## 5. Qué queda fuera
 

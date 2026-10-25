@@ -1,7 +1,7 @@
 # Capturas de pantalla (evidencia visual)
 
-Estado: **0 imágenes en el repositorio**. Este documento fija qué capturar, con
-qué nombre guardarlo y en qué sección del `README` se enlaza.
+Estado: **4 imágenes en `docs/capturas/`**, enlazadas en el `README`. Este
+documento fija qué capturar, con qué nombre guardarlo y en qué sección se enlaza.
 
 ## Requisitos comunes
 
@@ -16,7 +16,7 @@ qué nombre guardarlo y en qué sección del `README` se enlaza.
 
 | # | Archivo | Vista | Qué debe verse | Se enlaza en |
 |---|---------|-------|----------------|--------------|
-| 1 | `docs/capturas/01-observatorio.png` | Observatorio | Tras pulsar **Ejecutar análisis**: modo activo, 44 registros y **208 comprobaciones · 21 incidencias · 8 hallazgos · índice 90 %** | README §1 y §8 |
+| 1 | `docs/capturas/01-observatorio.png` | Observatorio | Tras pulsar **Ejecutar análisis**: modo activo, 44 registros y **208 comprobaciones · 21 incidencias · 8 hallazgos · índice 90 %** | README §1 |
 | 2 | `docs/capturas/02-calidad.png` | Calidad | Un hallazgo **abierto**, mostrando el cajón de **evidencia** con el valor y la referencia `tabla:row_id` | README §8 |
 | 3 | `docs/capturas/03-agentes.png` | Centro de agentes | Panel **Proveedor** con «IA habilitada» y el modelo, más el formulario de inicio | README §5 |
 | 4 | `docs/capturas/04-agente-13.png` | Centro de agentes | Detalle del trabajo **#13**: `completado`, las cuatro etapas cerradas y las **8 recomendaciones** (5 Alta, 3 Media) | README §10 |
@@ -36,7 +36,7 @@ Calidad, Agentes). La captura **4** es la prueba visual del recorrido agentic.
 
 ## Enlace en el README
 
-Cuando los archivos existan, se referencian con rutas relativas:
+Se referencian con rutas relativas (ya enlazadas):
 
 ```markdown
 ![Observatorio](docs/capturas/01-observatorio.png)

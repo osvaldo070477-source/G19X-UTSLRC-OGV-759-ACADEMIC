@@ -20,6 +20,10 @@ Abre con doble clic **`public/index.html`** en tu navegador.
 - Lo que decidas se guarda en el navegador (`localStorage`); si no está disponible, se avisa que durará solo la sesión.
 - *Live Server de VS Code no ejecuta PHP: sirve la misma demostración.*
 
+![Observatorio de NEXO: 208 comprobaciones, 21 incidencias, 8 hallazgos e índice 90 %](docs/capturas/01-observatorio.png)
+
+*Vista en modo conectado (MySQL). En modo demostración las cifras son las mismas.*
+
 ## 2. Modo PHP + Python sin MySQL (memoria)
 
 Necesitas **Python 3.10+** y **PHP 8.1+** (este equipo ya los tiene). Sin dependencias extra.
@@ -127,6 +131,8 @@ Límites conservadores (variables `NEXO_AI_*` en `.env`):
 | `NEXO_AI_MAX_ROWS_TOOL` | 200 | Filas máximas que ve una herramienta |
 | `NEXO_AI_REDACT` | 1 | Enmascara correos antes de enviarlos |
 
+![Centro de agentes: proveedor configurado y agentes disponibles](docs/capturas/03-agentes.png)
+
 ## 6. Detener y volver a iniciar
 
 ```powershell
@@ -196,6 +202,8 @@ en MySQL), **Seguridad** (cambio de contraseña verificando la actual) y
 - Verificación: `python tests/test_rules.py`, `python tests/test_agents.py`, `python tests/test_auth.py`, `python tests/test_carga.py`, `python tests/test_equivalencia.py`, `python scripts/check.py` y `python scripts/check_ui.py`.
   La prueba de equivalencia compara Python con JavaScript y requiere Node; en CI se ejecuta siempre.
 
+![Evidencia de un hallazgo de formato de correo, con valor y referencia tabla:fila](docs/capturas/02-calidad.png)
+
 ## 9. Seguridad local
 
 Secretos en `.env` (fuera de `public`, en `.gitignore`); el navegador jamás recibe el token
@@ -207,8 +215,8 @@ auditoría de las acciones de administración; sin SSO ni autenticación empresa
 
 ## 10. Estado de verificación
 
-Suites (2026-10-23): `tests/test_rules.py` (**OK**),
-`tests/test_agents.py` (**20/20**, con proveedor de prueba),
+Suites (2026-10-24): `tests/test_rules.py` (**OK**),
+`tests/test_agents.py` (**21/21**, con proveedor de prueba),
 `tests/test_auth.py` (**24/24**), `tests/test_carga.py` (**7/7**),
 `tests/test_equivalencia.py` (**Python ↔ JavaScript**, requiere Node; corre en CI),
 `scripts/check.py` (**OK**) y `scripts/check_ui.py` (**OK**). El mismo juego
@@ -230,6 +238,8 @@ OpenAI-compatible), modelo `gemini-3.5-flash`, `es_prueba = 0`.
 | Motor determinista (fuente de verdad) | 208 comprobaciones · 21 incidencias · índice **90%** |
 | Revisiones humanas | 2 (calidad y recomendaciones), **aprobadas** |
 | Recomendaciones | **8 válidas** (5 Alta, 3 Media) persistidas en `nexo_app.recommendations` (job_id = 13) |
+
+![Detalle del trabajo #13: cuatro etapas cerradas y 8 recomendaciones](docs/capturas/04-agente-13.png)
 
 El modelo eligió solo herramientas autorizadas y **no inventó conteos ni
 evidencias**; las recomendaciones citaron hallazgos reales y el motor siguió
