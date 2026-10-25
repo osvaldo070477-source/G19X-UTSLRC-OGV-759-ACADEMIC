@@ -69,7 +69,7 @@ from carga import (MAX_IMPORT_BATCH, SCHEMAS, existing_ids, fetch_meta,  # noqa:
                    insert_validas, parse_csv, preview_rows, save_meta, table_count,
                    validate_row)
 
-VERSION = "1.1.0"
+VERSION = "1.0.0"
 MAX_ROWS_PER_TABLE = 10000
 VALID_ACTIONS = ("accept", "discard", "reopen")
 

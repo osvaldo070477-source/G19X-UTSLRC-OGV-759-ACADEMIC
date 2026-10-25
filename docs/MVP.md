@@ -1,6 +1,6 @@
 # MVP — NEXO: Arquitectura Agentic para Data Governance
 
-**Autor:** Osvaldo Gastelum Valdez · **Institución:** UTSLRC · **Fecha:** 2026-10-23
+**Autor:** Osvaldo (`osvaldo070477-source`) · **Institución:** UTSLRC · **Fecha:** 2026-10-23
 **Entrega:** MVP académico (etiqueta `v1.0`) · **Licencia:** MIT
 
 ## 1. Qué es

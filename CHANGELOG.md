@@ -4,7 +4,7 @@ Todos los cambios relevantes de NEXO se registran en este archivo.
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/)
 y versionado [semántico](https://semver.org/lang/es/).
 
-## [1.0] - 2026-10-17
+## [1.0] - 2026-10-24
 
 Primera entrega académica: MVP local de gobierno de datos con centro de agentes.
 
