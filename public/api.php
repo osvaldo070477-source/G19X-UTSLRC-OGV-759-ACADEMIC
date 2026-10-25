@@ -274,7 +274,7 @@ if ($expectMethod === 'POST') {
     if ($action === 'auth_logout') {
         $data = [];
     }
-    $body = json_encode($data, JSON_UNESCAPED_UNICODE);
+    $body = json_encode($data === [] ? new stdClass() : $data, JSON_UNESCAPED_UNICODE);
 }
 
 $headers = "Content-Type: application/json\r\nX-NEXO-Token: $token\r\n";
