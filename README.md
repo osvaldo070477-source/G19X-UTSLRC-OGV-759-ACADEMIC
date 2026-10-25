@@ -185,9 +185,11 @@ en MySQL), **Seguridad** (cambio de contraseña verificando la actual) y
 
 - **Catálogo → Agregar registro**: formulario por activo con las columnas
   permitidas; valida igual que el motor y rechaza duplicados y formatos malos.
-- **Catálogo → Importar CSV**: sube un `.csv` con encabezados; primero se
-  **valida** (válidas vs. rechazadas con motivo por línea) y tú confirmas la
-  importación de las válidas. Máximo 500 filas por lote y 10 000 por tabla.
+- **Catálogo → Importar CSV**: sube un `.csv` con encabezados (se acepta BOM
+  UTF-8); primero se **valida** (válidas vs. rechazadas con motivo por línea) y
+  tú confirmas la importación de las válidas. Se rechazan fechas imposibles,
+  números no finitos y valores que exceden las longitudes permitidas. Máximo
+  500 filas por lote y 10 000 por tabla.
 - Cada fila guarda quién la cargó (`source_audit`); la escritura usa la cuenta
   exclusiva `nexo_wr` (solo INSERT en la fuente).
 - **Editar ficha** (admin): cambia descripción y responsable del activo.
@@ -207,17 +209,22 @@ en MySQL), **Seguridad** (cambio de contraseña verificando la actual) y
 ## 9. Seguridad local
 
 Secretos en `.env` (fuera de `public`, en `.gitignore`); el navegador jamás recibe el token
-ni la clave del proveedor; PHP valida origen en escrituras; MySQL con cuentas separadas,
-consultas parametrizadas y transacciones; decisiones como eventos acumulativos;
-límite de 10 000 filas por tabla; agentes sin comandos del sistema ni SQL arbitrario.
+ni la clave del proveedor; en modo servidor la API exige sesión (401 sin ella) y
+PHP valida el origen exacto en escrituras; MySQL con cuentas separadas, consultas
+parametrizadas y transacciones; decisiones como eventos acumulativos; límite de
+10 000 filas por tabla; agentes sin comandos del sistema ni SQL arbitrario.
+Las sesiones se revocan al desactivar la cuenta o cambiar la contraseña; los
+errores no exponen detalles internos y las respuestas llevan cabeceras
+`Content-Security-Policy`, `X-Frame-Options`, `X-Content-Type-Options` y
+`Cache-Control: no-store`.
 App local para un equipo pequeño con roles (`operador`, `lector`, `admin`) y
 auditoría de las acciones de administración; sin SSO ni autenticación empresarial.
 
 ## 10. Estado de verificación
 
-Suites (2026-10-24): `tests/test_rules.py` (**OK**),
+Suites (2026-10-24, v1.0.1): `tests/test_rules.py` (**OK**),
 `tests/test_agents.py` (**21/21**, con proveedor de prueba),
-`tests/test_auth.py` (**24/24**), `tests/test_carga.py` (**7/7**),
+`tests/test_auth.py` (**24/24**), `tests/test_carga.py` (**9/9**),
 `tests/test_equivalencia.py` (**Python ↔ JavaScript**, requiere Node; corre en CI),
 `scripts/check.py` (**OK**) y `scripts/check_ui.py` (**OK**). El mismo juego
 corre en CI (`.github/workflows/ci.yml`) en cada push, con un trabajo de humo
@@ -246,8 +253,8 @@ evidencias**; las recomendaciones citaron hallazgos reales y el motor siguió
 siendo la fuente de toda puntuación.
 
 Flujo de usuarios vivo: registro, duplicado (400), login erróneo (401), bloqueo
-tras 5 fallos (423), sesión que sobrevive, decisión firmada con el nombre,
-invitado sin firma y logout (401 posterior). Perfil verificado (registro→perfil→
+tras 5 fallos (423), sesión que sobrevive, decisión firmada con el nombre y
+logout (401 posterior). Perfil verificado (registro→perfil→
 cambio de nombre→cambio de clave→login con la nueva→decisión→actividad propia→
 logout), con fallo de BD sin éxito falso. Recuperación de contraseña verificada
 en vivo: registro → generar código nuevo → recover → login con la clave cambiada.

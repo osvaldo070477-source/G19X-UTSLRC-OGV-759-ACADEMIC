@@ -53,8 +53,8 @@ el guion del video es material aparte de la entrega.
 
 ## 4. Evidencia que respalda el MVP
 
-- **Pruebas:** `tests/test_rules.py` (OK), `tests/test_agents.py` (20/20),
-  `tests/test_auth.py` (24/24), `tests/test_carga.py` (7/7) y
+- **Pruebas:** `tests/test_rules.py` (OK), `tests/test_agents.py` (21/21),
+  `tests/test_auth.py` (24/24), `tests/test_carga.py` (9/9) y
   `tests/test_equivalencia.py` (Python ↔ JavaScript).
 - **Integración continua:** `.github/workflows/ci.yml` ejecuta las pruebas y un
   humo de extremo a extremo que levanta MySQL + PHP + Python y comprueba los

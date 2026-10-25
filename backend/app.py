@@ -69,7 +69,7 @@ from carga import (MAX_IMPORT_BATCH, SCHEMAS, existing_ids, fetch_meta,  # noqa:
                    insert_validas, parse_csv, preview_rows, save_meta, table_count,
                    validate_row)
 
-VERSION = "1.0.0"
+VERSION = "1.0.1"
 MAX_ROWS_PER_TABLE = 10000
 VALID_ACTIONS = ("accept", "discard", "reopen")
 
@@ -347,7 +347,7 @@ def add_decision_memory(run_id, tabla, columna, regla, accion, comentario, decid
 # ---------------- HTTP ----------------
 
 class Handler(BaseHTTPRequestHandler):
-    server_version = "NEXO/1.0"
+    server_version = f"NEXO/{VERSION}"
 
     def log_message(self, *a):
         pass
