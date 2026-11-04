@@ -30,12 +30,6 @@ INSERT IGNORE INTO asset_meta (tabla, nombre, descripcion, responsable, dominio)
 -- Código de recuperación de un solo uso (hash; NULL cuando ya se usó).
 ALTER TABLE users ADD COLUMN recovery_hash CHAR(64) NULL COMMENT 'SHA-256 del código; NULL = sin código vigente';
 
--- Cuenta exclusiva de inserción en la fuente (solo INSERT, nada más).
--- Sustituye PON_CLAVE_WR por la de tu .env (NEXO_WR_PASSWORD).
---   CREATE USER 'nexo_wr'@'127.0.0.1' IDENTIFIED BY 'PON_CLAVE_WR';
---   CREATE USER 'nexo_wr'@'localhost' IDENTIFIED BY 'PON_CLAVE_WR';
---   GRANT INSERT ON nexo_source.* TO 'nexo_wr'@'127.0.0.1';
---   GRANT INSERT ON nexo_source.* TO 'nexo_wr'@'localhost';
---   GRANT INSERT ON nexo_app.source_audit TO 'nexo_wr'@'127.0.0.1';
---   GRANT INSERT ON nexo_app.source_audit TO 'nexo_wr'@'localhost';
---   FLUSH PRIVILEGES;
+-- La cuenta de inserción nexo_wr se crea en sql/04_users_template.sql.
+-- Su permiso sobre nexo_app.source_audit se concede en sql/07_permisos.sql,
+-- que se ejecuta al final (después de crear esta tabla).

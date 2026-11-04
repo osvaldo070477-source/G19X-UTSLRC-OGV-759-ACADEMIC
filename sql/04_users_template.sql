@@ -1,6 +1,7 @@
 -- NEXO · plantilla de usuarios MySQL (edítala antes de ejecutarla).
 -- No contiene contraseñas reales: sustituye CADA 'PON...' por valores propios.
 -- Ejecutar como administrador en el cliente mysql, línea por línea.
+-- Las sentencias están comentadas a propósito: descoméntalas al ejecutar.
 -- La fuente es de SOLO LECTURA y la app escribe únicamente en nexo_app
 -- con los permisos mínimos de sql/07_permisos.sql (aplícalo después).
 --
@@ -16,7 +17,17 @@
 --   GRANT SELECT, INSERT, UPDATE, DELETE ON nexo_app.* TO 'nexo_app'@'127.0.0.1';
 --   GRANT SELECT, INSERT, UPDATE, DELETE ON nexo_app.* TO 'nexo_app'@'localhost';
 --
+-- Inserción en la fuente (solo para la carga gobernada; nada más):
+--   CREATE USER 'nexo_wr'@'127.0.0.1' IDENTIFIED BY 'PON_CONTRASEÑA_WR';
+--   CREATE USER 'nexo_wr'@'localhost' IDENTIFIED BY 'PON_CONTRASEÑA_WR';
+--   GRANT INSERT ON nexo_source.* TO 'nexo_wr'@'127.0.0.1';
+--   GRANT INSERT ON nexo_source.* TO 'nexo_wr'@'localhost';
+--
+-- El permiso de auditoría (nexo_app.source_audit) se concede en 07_permisos.sql,
+-- después de que 09_carga.sql cree la tabla.
+--
 --   FLUSH PRIVILEGES;
 --
--- Después copia esas contraseñas a tu archivo .env (nunca a este .sql).
+-- Después copia esas contraseñas a tu .env (nunca a este .sql):
+-- NEXO_RO_PASSWORD, NEXO_APP_PASSWORD y NEXO_WR_PASSWORD.
 SELECT 'Plantilla: sustituye las contraseñas antes de ejecutar.' AS aviso;

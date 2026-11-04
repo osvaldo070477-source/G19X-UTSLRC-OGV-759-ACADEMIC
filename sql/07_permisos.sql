@@ -1,6 +1,7 @@
 -- NEXO · permisos mínimos de la cuenta de aplicación (requiere root u otro admin).
 -- Corrige el error 1142 en login: nexo_app necesita UPDATE en users y
 -- sesiones, e INSERT/UPDATE según tabla. Nunca DDL ni acceso a mysql.*.
+-- También concede a nexo_wr solo INSERT en la fuente y en source_audit.
 -- Ejecutar en el cliente mysql como administrador, una sola vez.
 USE nexo_app;
 
@@ -44,5 +45,11 @@ GRANT SELECT, INSERT, UPDATE ON nexo_app.agent_jobs TO 'nexo_app'@'localhost';
 GRANT SELECT, INSERT, UPDATE ON nexo_app.reviews TO 'nexo_app'@'127.0.0.1';
 GRANT SELECT, INSERT, UPDATE ON nexo_app.reviews TO 'nexo_app'@'localhost';
 
+-- Cuenta de carga (nexo_wr): solo INSERT en la fuente y en la auditoría de filas.
+GRANT INSERT ON nexo_source.* TO 'nexo_wr'@'127.0.0.1';
+GRANT INSERT ON nexo_source.* TO 'nexo_wr'@'localhost';
+GRANT INSERT ON nexo_app.source_audit TO 'nexo_wr'@'127.0.0.1';
+GRANT INSERT ON nexo_app.source_audit TO 'nexo_wr'@'localhost';
+
 FLUSH PRIVILEGES;
-SELECT 'Permisos mínimos aplicados a nexo_app.' AS resultado;
+SELECT 'Permisos mínimos aplicados a nexo_app y nexo_wr.' AS resultado;
