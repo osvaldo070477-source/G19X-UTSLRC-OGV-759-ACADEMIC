@@ -6,7 +6,7 @@ Recorrido de gobierno de datos con **reglas deterministas verificables** y
 **agentes reales**: el modelo decide qué herramientas autorizadas usar;
 catálogo → análisis → evidencias → recomendaciones → decisiones → bitácora.
 
-**Autor:** osvaldo070477-source (`Osvaldo070477@gmail.com`) ·
+**Autor:** Osvaldo Gastelum Valdez (`osvaldo070477-source`, `Osvaldo070477@gmail.com`) ·
 **Repositorio:** `osvaldo070477-source/G19X-UTSLRC-OGV-759-ACADEMIC` ·
 Proyecto académico (UTSLRC) · Licencia [MIT](LICENSE) · [Historial de cambios](CHANGELOG.md).
 
@@ -59,7 +59,7 @@ sin `--demo` intenta MySQL según `.env` y **falla con error visible** si no hay
    source sql/01_schema_source.sql
    source sql/02_schema_app.sql
    source sql/03_seed_source.sql
-   -- sql/04_users_template.sql es plantilla: edita las contraseñas antes de ejecutarla
+   -- sql/04_users_template.sql es plantilla: crea las TRES cuentas (nexo_ro, nexo_app, nexo_wr)
    source sql/05_agentic.sql
    source sql/06_auth.sql
    source sql/08_usuarios_rol.sql
@@ -67,13 +67,22 @@ sin `--demo` intenta MySQL según `.env` y **falla con error visible** si no hay
    source sql/10_admin_audit.sql
    source sql/07_permisos.sql
    ```
-   `07_permisos.sql` va al final: concede permisos a `nexo_app` sobre tablas que
-   crean `09` y `10` (`source_audit`, `asset_meta`, `admin_audit`), y MySQL
-   rechaza un `GRANT` sobre tablas inexistentes (error 1146). Aplicarlo es
-   obligatorio: sin él, el acceso falla con error 1142 porque la cuenta de
-   aplicación no puede actualizar intentos de acceso ni sesiones. Si `08`
-   marca error 1060 (columna duplicada), ignóralo.
-4. Copia `.env.example` o genera `.env` con `python scripts/gen_env.py` y anota las contraseñas reales.
+   `07_permisos.sql` va al final: concede permisos a `nexo_app` y `nexo_wr`
+   sobre tablas que crean `09` y `10` (`source_audit`, `asset_meta`,
+   `admin_audit`), y MySQL rechaza un `GRANT` sobre tablas inexistentes
+   (error 1146). Aplicarlo es obligatorio: sin él, el acceso falla con error
+   1142 porque la cuenta de aplicación no puede actualizar intentos de acceso
+   ni sesiones. Si `08` o `09` marcan error 1060 (columna duplicada), ignóralo.
+
+   Antes de seguir, abre `sql/04_users_template.sql`, sustituye los tres
+   marcadores `PON_CONTRASEÑA_*`, **descomenta** las sentencias `CREATE USER`
+   y `GRANT` y ejecútalas línea por línea en el cliente `mysql`. El archivo
+   está comentado a propósito: si lo ejecutas tal cual con `source`, solo
+   imprime el aviso y no crea ninguna cuenta. Sin `nexo_wr`, «Agregar
+   registro» e «Importar CSV» fallan porque la carga usa esa cuenta.
+4. Copia `.env.example` o genera `.env` con `python scripts/gen_env.py`; asegúrate de que
+   `NEXO_RO_PASSWORD`, `NEXO_APP_PASSWORD` y `NEXO_WR_PASSWORD` coinciden con las claves
+   de las tres cuentas.
 5. Inicia Python **sin** `--demo` y PHP como en el punto 2. Verás **«Modo conectado — PHP · Python · MySQL»**.
 
 ## 4. Estructura
@@ -191,7 +200,9 @@ en MySQL), **Seguridad** (cambio de contraseña verificando la actual) y
   números no finitos y valores que exceden las longitudes permitidas. Máximo
   500 filas por lote y 10 000 por tabla.
 - Cada fila guarda quién la cargó (`source_audit`); la escritura usa la cuenta
-  exclusiva `nexo_wr` (solo INSERT en la fuente).
+  exclusiva `nexo_wr` (solo INSERT en la fuente). Esa cuenta se crea en
+  `sql/04_users_template.sql` y su permiso de auditoría se concede en
+  `sql/07_permisos.sql`.
 - **Editar ficha** (admin): cambia descripción y responsable del activo.
 - Tras cargar, ejecuta un análisis para ver los datos en Calidad.
 
@@ -214,9 +225,11 @@ PHP valida el origen exacto en escrituras; MySQL con cuentas separadas, consulta
 parametrizadas y transacciones; decisiones como eventos acumulativos; límite de
 10 000 filas por tabla; agentes sin comandos del sistema ni SQL arbitrario.
 Las sesiones se revocan al desactivar la cuenta o cambiar la contraseña; los
-errores no exponen detalles internos y las respuestas llevan cabeceras
-`Content-Security-Policy`, `X-Frame-Options`, `X-Content-Type-Options` y
-`Cache-Control: no-store`.
+errores no exponen detalles internos. El HTML lleva `Content-Security-Policy`,
+`X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy` y
+`Cache-Control: no-store`; la API JSON lleva `X-Frame-Options`,
+`X-Content-Type-Options`, `Referrer-Policy` y `Cache-Control: no-store`, pero
+**no** `Content-Security-Policy`.
 App local para un equipo pequeño con roles (`operador`, `lector`, `admin`) y
 auditoría de las acciones de administración; sin SSO ni autenticación empresarial.
 

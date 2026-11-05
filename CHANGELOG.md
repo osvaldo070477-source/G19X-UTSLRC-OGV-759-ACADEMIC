@@ -17,9 +17,9 @@ incidencias, 8 hallazgos, índice 90).
 - Las sesiones se revocan al desactivar una cuenta, al restablecerla desde
   administración, al recuperar la contraseña y al cambiarla; el cambio conserva
   únicamente la sesión actual.
-- Cabeceras de seguridad en HTML y API: `Content-Security-Policy`,
-  `X-Frame-Options`, `X-Content-Type-Options` y `Referrer-Policy`; los estáticos
-  mantienen `Cache-Control: no-store`.
+- Cabeceras de seguridad: el HTML lleva `Content-Security-Policy`,
+  `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy` y
+  `Cache-Control: no-store`; la API JSON lleva las cuatro últimas, pero no CSP.
 - Validación de origen exacta (esquema, host y puerto) en las escrituras de
   `api.php`, además del token CSRF.
 - El límite de rutas estáticas compara el directorio real con su separador,
@@ -89,4 +89,5 @@ Primera entrega académica: MVP local de gobierno de datos con centro de agentes
 - Permisos de MySQL (evita el error 1142) y mensajes de error sin filtrar detalles internos.
 - Paginación idempotente y varios ajustes de la interfaz.
 
+[1.0.1]: https://github.com/osvaldo070477-source/G19X-UTSLRC-OGV-759-ACADEMIC/releases/tag/v1.0.1
 [1.0]: https://github.com/osvaldo070477-source/G19X-UTSLRC-OGV-759-ACADEMIC/releases/tag/v1.0

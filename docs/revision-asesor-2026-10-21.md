@@ -1,12 +1,11 @@
 # Revisión del asesor — 21 de octubre de 2026
 
-**Estado:** puntos atendidos en `main` al **2026-10-25**.
+**Estado:** puntos atendidos en `main` al **2026-11-02**.
 **Versión:** `v1.0.1` (tag anotado sobre `785cb83`).
-**CI:** run 48 en verde: trabajos `test` y `smoke` (MySQL + PHP + Python).
-**Release:** no publicado al 2026-10-25; el texto está listo en
+**CI:** [run 49](https://github.com/osvaldo070477-source/G19X-UTSLRC-OGV-759-ACADEMIC/actions/runs/40173233295)
+en verde: trabajos `test` y `smoke` (MySQL + PHP + Python).
+**Release:** no publicado al 2026-11-02; el texto está listo en
 [release-v1.0.1.md](release-v1.0.1.md).
-**SGPA:** `docs/MVP.md` está listo para subir; la carga a Documentos del SGPA
-queda como acción externa.
 
 ## 1. Puntos de la revisión
 
@@ -45,12 +44,11 @@ El endurecimiento **no cambia las reglas, los datos ni las cifras**: siguen sien
 - PHP 8.4: sintaxis correcta en `public/api.php`, `public/index.php` y `server/router.php`.
 - Humo local PHP → Python: 401 sin sesión, 403 con origen ajeno, registro 201,
   análisis 200 con índice 90 y 401 después del logout.
-- CI: [run 48](https://github.com/osvaldo070477-source/G19X-UTSLRC-OGV-759-ACADEMIC/actions/runs/40170477168), `test` y `smoke` en verde.
-- `git status` limpio antes de este documento; la entrega de código está en
-  `785cb83` y el tag `v1.0.1` apunta ahí.
+- CI: [run 49](https://github.com/osvaldo070477-source/G19X-UTSLRC-OGV-759-ACADEMIC/actions/runs/40173233295), `test` y `smoke` en verde.
+- `git status` limpio antes de este documento; `main` está en `32faa12` y el tag
+  `v1.0.1` sigue apuntando a `785cb83`.
 
 ## 4. Pendiente externo
 
-- Subir `docs/MVP.md` a **Documentos del SGPA**.
 - Publicar el **release de GitHub** con el tag `v1.0.1`; el entorno no tiene
   credenciales de GitHub y actualmente hay **0 releases publicados**.

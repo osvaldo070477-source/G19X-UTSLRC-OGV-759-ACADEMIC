@@ -14,8 +14,9 @@ comprobaciones · 21 incidencias · 8 hallazgos · índice 90 %**.
   valores fuera de rango y longitudes excesivas.
 - **Redacción:** los correos incompletos o mal formados también se enmascaran;
   `maximo` se valida sin lanzar excepciones ante entradas inválidas.
-- **Cabeceras:** CSP, `X-Frame-Options`, `X-Content-Type-Options`,
-  `Referrer-Policy` y `Cache-Control: no-store` en HTML y API.
+- **Cabeceras:** el HTML lleva CSP, `X-Frame-Options`, `X-Content-Type-Options`,
+  `Referrer-Policy` y `Cache-Control: no-store`; la API JSON lleva las cuatro
+  últimas, pero no CSP.
 - **Origen y rutas:** comparación exacta de esquema, host y puerto; el límite de
   archivos estáticos ya no acepta directorios hermanos con el mismo prefijo.
 - **Errores y concurrencia:** respuestas sin detalles internos, cuerpo JSON
@@ -40,4 +41,4 @@ comprobaciones · 21 incidencias · 8 hallazgos · índice 90 %**.
 - `README.md`, `docs/MVP.md`, `CHANGELOG.md` y esta nota.
 - Capturas y corrida real del trabajo **#13** sin cambios.
 
-**Autor:** Osvaldo (`osvaldo070477-source`) · **Licencia:** MIT
+**Autor:** Osvaldo Gastelum Valdez (`osvaldo070477-source`) · **Licencia:** MIT

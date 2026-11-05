@@ -34,4 +34,4 @@ deterministas** y agentes que proponen sin inventar cifras.
 - `docs/backlog.md`, `docs/capturas.md`
 - `CHANGELOG.md` y `LICENSE` (MIT)
 
-**Autor:** Osvaldo (`osvaldo070477-source`) · **Licencia:** MIT
+**Autor:** Osvaldo Gastelum Valdez (`osvaldo070477-source`) · **Licencia:** MIT
