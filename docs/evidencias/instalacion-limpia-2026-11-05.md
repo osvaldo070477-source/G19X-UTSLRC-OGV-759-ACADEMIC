@@ -111,6 +111,19 @@ scripts/check.py           RESULTADO: TODO OK
 scripts/check_ui.py        RESULTADO: TODO OK
 ```
 
+### Integración continua
+
+El humo de GitHub Actions fallaba porque el contenedor de MySQL recibe la
+conexión desde la red de Docker, no como `127.0.0.1`: `nexo_wr` solo existía
+para `'127.0.0.1'` y `'localhost'`, y el permiso de `source_audit` de
+`sql/07_permisos.sql` tampoco aplicaba a `'%'`. Se corrigió en
+`.github/workflows/ci.yml` (commit `3a747eb`) creando `nexo_wr@'%'` y
+concediéndole `INSERT` en la fuente y en la auditoría. La reproducción local con
+una cuenta `nexo_wr@'%'` únicamente devolvió `source_add` **201**.
+
+Run verde: [42116125752](https://github.com/osvaldo070477-source/G19X-UTSLRC-OGV-759-ACADEMIC/actions/runs/42116125752)
+sobre `3a747eb`; los trabajos **`test`** y **`smoke`** terminaron en `success`.
+
 ## Fallos encontrados y correcciones
 
 1. **Rol ausente en la barra lateral (paso 1).** El guion pide mostrar nombre y
