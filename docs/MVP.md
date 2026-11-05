@@ -47,8 +47,13 @@ el guion del video es material aparte de la entrega.
 4. **Calidad.** Abrir un hallazgo y mostrar la evidencia (`CLI-004`, fila `cli-04`).
 5. **Decisiones.** Aceptar una recomendación con comentario; aclarar que **no corrige datos ni índice**.
 6. **Bitácora.** Consultar una ejecución reciente y exportar el análisis a JSON.
-7. **Centro de agentes.** Abrir el trabajo **#13**: etapas, 9 herramientas, 2 revisiones humanas y 8 recomendaciones.
+7. **Centro de agentes.** Abrir el trabajo **#13** de la corrida real: etapas, 9 herramientas, 2 revisiones humanas y 8 recomendaciones. En una base nueva no hay historial: inicia un trabajo con el proveedor de prueba y aprueba sus dos revisiones.
 8. **Administración y perfil.** Mostrar roles, auditoría, desbloqueo y el perfil propio.
+
+> Las cifras **208 / 21 / 8 / 90 %** corresponden a la semilla intacta. Si ya
+> importaste filas, haz el recorrido antes de la carga o sobre una base
+> restaurada: una fila nueva de clientes sube el total a **213 comprobaciones**
+> (el índice puede variar).
 
 **Frase que resume el cierre:** *«El motor calcula; la IA propone; la persona decide.»*
 
