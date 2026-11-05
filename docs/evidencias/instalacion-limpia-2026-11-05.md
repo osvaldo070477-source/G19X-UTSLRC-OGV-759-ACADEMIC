@@ -156,3 +156,48 @@ la etiqueta del rol; no cambian reglas, datos ni cifras.
 
 Los servicios de prueba y la instancia temporal de 3308 se detuvieron al
 terminar. El MySQL80 del equipo (3306) no se tocó.
+
+## Anexo 2026-11-05 — comprobación por interfaz (puntos 3 y 4 del paso 2)
+
+Base reinicializada en 3308 con los scripts del README en orden (01, 02, 03,
+04 con la plantilla descomentada, 05, 06, 08, 09, 10 y 07). Servicios en
+127.0.0.1:8001 (Python) y 127.0.0.1:8000 (PHP). Cuenta `punto4@nexo.test`
+registrada por la interfaz y ascendida a admin con `scripts/crea_admin.py`; la
+barra lateral muestra «Punto · admin».
+
+### Punto 3: CSV por la interfaz
+
+En Catálogo → Importar CSV se subió `clientes-punto4.csv` (3 filas):
+
+```text
+Validar: 3 válidas · 0 rechazadas.
+Importar: Importadas 3 filas (0 rechazadas). Ejecuta un análisis.
+clientes: 23 filas (cli-21, cli-22, cli-23)
+source_audit: 3 inserts (cli-21, cli-22, cli-23)
+```
+
+Análisis posterior en el Observatorio:
+
+```text
+Análisis completado. 223 comprobaciones, 21 incidencias, índice 91%.
+ACTIVOS 3 · REGISTROS 47 · HALLAZGOS 8
+```
+
+El análisis tomó en cuenta el CSV: pasó de 208 comprobaciones y 44 registros
+a 223 comprobaciones y 47 registros.
+
+### Punto 4: recorrido de `docs/MVP.md` §3 con reloj
+
+| # | Paso | Resultado | Tiempo |
+|---|------|-----------|--------|
+| 1 | Entrar | Sesión `punto4@nexo.test`; barra lateral «Punto · admin» | 354 ms |
+| 2 | Observatorio | 223 comprobaciones, 21 incidencias, 8 hallazgos, índice 91 %, 47 registros | 115 ms |
+| 3 | Catálogo | 3 activos con dominio, responsable y reglas aplicables | 16 ms |
+| 4 | Calidad | Evidencia `clientes.id` (Unicidad): `clientes:cli-04`, valor `CLI-004` | 37 ms |
+| 5 | Decisiones | Recomendación de formato de correo aceptada (8 → 7 pendientes); reanálisis: 223/21/91 % | 291 ms + 149 ms |
+| 6 | Bitácora | Ejecución #3 consultada y exportada a `nexo_ejecucion_3.json` (5 763 bytes) | 63 ms |
+| 7 | Agentes | Trabajo nuevo #1 con proveedor de prueba: 4 herramientas, 2 revisiones aprobadas, 8 recomendaciones | 827 ms |
+| 8 | Administración y perfil | Cuenta admin visible, desbloqueo auditado y perfil con rol admin | 330 ms |
+
+Tiempo total automatizado: **~2.2 s**. La narración humana conserva el objetivo
+de **10–12 minutos**.
