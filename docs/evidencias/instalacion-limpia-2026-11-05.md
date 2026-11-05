@@ -201,3 +201,24 @@ a 223 comprobaciones y 47 registros.
 
 Tiempo total automatizado: **~2.2 s**. La narración humana conserva el objetivo
 de **10–12 minutos**.
+
+## Verificación del punto 5 (2026-11-05)
+
+- Bitácora: `docs/evidencias/instalacion-limpia-2026-11-05.md` (publicada en
+  `origin/main`, commit `4435256`).
+- Fecha de la prueba: **2026-11-05**.
+- Commit probado en el clon: **`c33f8c7b902cace117a35f12eb08fd3094550880`**
+  (`docs: actualiza autoria, cabeceras y revision del asesor`).
+
+| Fallo encontrado | Dónde quedó corregido |
+|---|---|
+| La instalación no creaba `nexo_wr` y la carga fallaba | `README.md` §3 (líneas 62, 77–82, 84–85): plantilla con las tres cuentas, descomentar y variables del `.env` |
+| Modo C sin `mysql-connector-python` | `README.md` §3 paso 2 (línea 55): el paso ya estaba; en el clon se siguió y `mysql_ok` quedó en `true` |
+| Plantilla `04` comentada | `README.md` §3 (líneas 77–82): hay que descomentar y sustituir `PON_CONTRASEÑA_*` |
+| Rol ausente en la barra lateral | `public/js/auth.js` (commit `7fcd1a1`): muestra `Nombre · admin`, `Nombre · operador` o `Nombre (lectura)` |
+| El trabajo #13 no existe en una base nueva | `docs/MVP.md` §3: en base nueva iniciar un trabajo con el proveedor de prueba |
+| 208 vs 213 comprobaciones tras importar | `docs/MVP.md` §3: advertencia de que una fila nueva sube el total a 213 |
+
+Las correcciones de instalación están en el `README.md` y fueron verificadas
+con el clon limpio; las demás quedaron en el código o en `docs/MVP.md` y
+documentadas en esta bitácora. No se modificaron reglas, datos ni cifras.
