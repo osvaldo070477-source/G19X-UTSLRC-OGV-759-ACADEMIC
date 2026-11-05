@@ -47,7 +47,8 @@ function paintStrength(){
 function setUser(u){
   state.user=u||null;
   var name=u?u.nombre.split(" ")[0]:"Invitado";
-  $("userLabel").textContent=name+(u&&u.rol==="lector"?" (lectura)":"");
+  var role=u?(u.rol==="lector"?" (lectura)":" · "+u.rol):"";
+  $("userLabel").textContent=name+role;
   if($("userInitials")) $("userInitials").textContent=u?initials(u.nombre):"?";
   var admin=!!(u&&u.rol==="admin");
   if($("navAdmin")) $("navAdmin").hidden=!admin;
